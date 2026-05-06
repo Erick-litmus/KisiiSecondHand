@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  avatar    String?
+  password  String    // Added for user auth
+  items     Product[]
+  role      String    @default("USER") // USER, ADMIN
+  
+  // Chat relations
+  sentMessages     Message[]
+  buyerConversations Conversation[] @relation("BuyerConversations")
+  sellerConversations Conversation[] @relation("SellerConversations")
+  
+  // OTP Verification
+  isVerified Boolean   @default(false)
+  otpCode    String?
+  otpExpiresAt DateTime?
+
+  // Password Reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  // Notifications
+  notifications Notification[]
+
+  // Reports
+  reportsMade     Report[] @relation("ReportsMade")
+  reportsReceived Report[] @relation("ReportsReceived")
+
+  isBanned  Boolean @default(false)
+  
+  savedItems SavedItem[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt 
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  condition   String   // e.g., New, Like New, Good, Fair
+  image       String?
+  image2      String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  conversations Conversation[]
+  reports       Report[]
+  savedBy       SavedItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavedItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  buyerId   String
+  buyer     User      @relation("BuyerConversations", fields: [buyerId], references: [id])
+  sellerId  String
+  seller    User      @relation("SellerConversations", fields: [sellerId], references: [id])
+  messages  Message[]
+  reports   Report[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([productId, buyerId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  text           String
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info") // info, success, message, warning
+  isRead    Boolean  @default(false)
+  link      String?  // Optional URL to navigate to when clicked
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id               String       @id @default(cuid())
+  reporterId       String
+  reporter         User         @relation("ReportsMade", fields: [reporterId], references: [id])
+  reportedUserId   String
+  reportedUser     User         @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  productId        String?
+  product          Product?     @relation(fields: [productId], references: [id])
+  conversationId   String?
+  conversation     Conversation? @relation(fields: [conversationId], references: [id])
+  reason           String       // e.g. Scam, Harassment, Fake Listing, Inappropriate, Other
+  status           String       @default("PENDING") // PENDING, REVIEWED, DISMISSED
+  createdAt        DateTime     @default(now())
+}
