@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import { supabase } from "@/lib/supabase";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -39,13 +38,30 @@ export async function POST(request: NextRequest) {
     // Create unique filename
     const extension = file.name.split(".").pop();
     const fileName = `${crypto.randomUUID()}.${extension}`;
-    const path = join(process.cwd(), "public/uploads", fileName);
+    const filePath = `${fileName}`;
 
-    await writeFile(path, buffer);
-    
-    const url = `/uploads/${fileName}`;
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    return NextResponse.json({ url });
+    if (error) {
+      console.error("Supabase Storage error:", error);
+      return NextResponse.json(
+        { error: "Failed to upload to cloud storage" },
+        { status: 500 }
+      );
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(filePath);
+
+    return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(

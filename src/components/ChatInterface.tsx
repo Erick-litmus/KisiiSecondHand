@@ -29,7 +29,13 @@ export default function ChatInterface({
   const [isSending, setIsSending] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const [lastActiveDate, setLastActiveDate] = useState<string | null>(initialLastActive || null);
+  const [isMounted, setIsMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Handle hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -118,7 +124,7 @@ export default function ChatInterface({
                 "text-[10px] font-black uppercase tracking-widest transition-colors",
                 otherUserOnline ? "text-emerald-500" : "text-slate-400"
               )}>
-                {otherUserOnline ? "Online" : lastActiveDate ? `Last seen ${formatRelativeTime(lastActiveDate)}` : "Offline"}
+                {otherUserOnline ? "Online" : (isMounted && lastActiveDate) ? `Last seen ${formatRelativeTime(lastActiveDate)}` : "Offline"}
               </p>
             </div>
           </div>
