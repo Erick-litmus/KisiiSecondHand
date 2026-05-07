@@ -70,7 +70,7 @@ export default function ChatInterface({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-w-4xl mx-auto bg-[#0a0a0a] rounded-[40px] shadow-2xl border border-white/5 overflow-hidden">
+    <div className="flex flex-col h-full w-full mx-auto bg-[#0a0a0a] border-x border-white/5 overflow-hidden">
       {/* Chat Header */}
       <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0d0d0d]/50 backdrop-blur-md">
         <div className="flex items-center gap-4">
@@ -108,28 +108,45 @@ export default function ChatInterface({
       {/* Messages Area */}
       <div 
         ref={scrollRef}
-        className="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar whatsapp-bg"
+        className="flex-grow overflow-y-auto p-6 space-y-3 no-scrollbar whatsapp-bg relative"
       >
         {messages.map((msg, i) => {
           const isMe = msg.senderId === currentUser.id;
           
           return (
             <div key={msg.id || i} className={cn(
-              "flex flex-col max-w-[80%] md:max-w-[70%]",
-              isMe ? "ml-auto items-end" : "mr-auto items-start"
+              "flex w-full mb-1",
+              isMe ? "justify-end" : "justify-start"
             )}>
               <div className={cn(
-                "p-4 rounded-[20px] text-sm leading-relaxed relative",
+                "relative max-w-[85%] md:max-w-[70%] px-3 py-1.5 shadow-md",
                 isMe 
-                  ? "bg-emerald-600 text-white rounded-tr-none shadow-lg shadow-emerald-900/20" 
-                  : "bg-[#1f2c33] text-slate-200 rounded-tl-none"
+                  ? "bg-[#005c4b] text-white rounded-lg rounded-tr-none" 
+                  : "bg-[#202c33] text-slate-200 rounded-lg rounded-tl-none"
               )}>
-                {msg.text}
+                {/* Bubble Tail */}
+                <div className={cn(
+                  "absolute top-0 w-2 h-2.5",
+                  isMe 
+                    ? "right-[-8px] border-l-[8px] border-l-[#005c4b] border-b-[10px] border-b-transparent" 
+                    : "left-[-8px] border-r-[8px] border-r-[#202c33] border-b-[10px] border-b-transparent"
+                )} />
+
+                <div className="flex flex-col gap-1">
+                  <p className="text-[13.5px] leading-relaxed pr-16">{msg.text}</p>
+                  <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
+                    <span className="text-[10px] text-white/50 font-medium">
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {isMe && (
+                      <div className="flex -space-x-1">
+                        <span className="text-[10px] text-[#53bdeb]">✓</span>
+                        <span className="text-[10px] text-[#53bdeb]">✓</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1.5 px-2 flex items-center gap-1">
-                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                {isMe && <span className="text-emerald-500">✓✓</span>}
-              </span>
             </div>
           );
         })}

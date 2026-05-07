@@ -38,7 +38,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const otherUser = isBuyer ? conversation.seller : conversation.buyer;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12">
+    <div className="h-[calc(100vh-80px)] bg-[#0a0a0a]">
       <ChatInterface 
         conversationId={id}
         initialMessages={initialMessages}
