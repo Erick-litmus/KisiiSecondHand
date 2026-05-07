@@ -14,7 +14,8 @@ model User {
   email     String    @unique
   name      String?
   avatar    String?
-  password  String    // Added for user auth
+  password  String?   // Null for OAuth (Google) users
+  googleId  String?   @unique // Google OAuth user ID
   items     Product[]
   role      String    @default("USER") // USER, ADMIN
   

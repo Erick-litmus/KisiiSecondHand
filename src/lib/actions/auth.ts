@@ -102,6 +102,11 @@ export async function login(formData: any) {
       return { error: "Invalid email or password" };
     }
 
+    // Google OAuth users have no password – direct them to use Google sign-in
+    if (!user.password) {
+      return { error: "This account was created with Google. Please use 'Continue with Google' to sign in." };
+    }
+
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {

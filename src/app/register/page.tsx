@@ -4,7 +4,8 @@ import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { register } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
-import { Loader2, ArrowRight, Mail, Lock, User, CheckCircle2, Camera, X } from "lucide-react";
+import { Loader2, Mail, Lock, User, CheckCircle2, Camera, X } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -243,6 +244,18 @@ export default function RegisterPage() {
                 </>
               )}
             </button>
+
+            {/* OR divider */}
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/5"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
+                <span className="bg-[#111111] px-4 text-slate-600">or sign up with</span>
+              </div>
+            </div>
+
+            <GoogleAuthButton callbackPath="/" label="Sign up with Google" />
 
             <p className="text-[10px] text-center text-slate-600 px-4 leading-relaxed">
               By creating an account, you agree to our <span className="text-slate-400 font-bold underline cursor-pointer">Terms of Service</span> and <span className="text-slate-400 font-bold underline cursor-pointer">Privacy Policy</span>.

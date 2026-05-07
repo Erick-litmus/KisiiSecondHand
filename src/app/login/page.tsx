@@ -4,7 +4,8 @@ import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { login } from "@/lib/actions/auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ArrowRight, Mail, Lock, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Lock, CheckCircle2 } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,9 +149,11 @@ function LoginContent() {
                 <div className="w-full border-t border-white/5"></div>
               </div>
               <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
-                <span className="bg-[#111111] px-4 text-slate-600">Secure Access</span>
+                <span className="bg-[#111111] px-4 text-slate-600">or continue with</span>
               </div>
             </div>
+
+            <GoogleAuthButton callbackPath={callback} label="Continue with Google" />
           </form>
         </div>
       </div>
