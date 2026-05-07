@@ -203,21 +203,26 @@ export async function getConversations() {
 
   const userId = session.user.id;
 
-  return await prisma.conversation.findMany({
-    where: {
-      OR: [{ buyerId: userId }, { sellerId: userId }],
-    },
-    include: {
-      product: true,
-      buyer: { select: { name: true, email: true } },
-      seller: { select: { name: true, email: true } },
-      messages: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
+  try {
+    return await prisma.conversation.findMany({
+      where: {
+        OR: [{ buyerId: userId }, { sellerId: userId }],
       },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+      include: {
+        product: true,
+        buyer: { select: { name: true, email: true } },
+        seller: { select: { name: true, email: true } },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+  } catch (err) {
+    console.error("Error fetching conversations:", err);
+    return [];
+  }
 }
 
 export async function getMessages(conversationId: string) {

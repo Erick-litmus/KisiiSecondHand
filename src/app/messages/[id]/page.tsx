@@ -45,6 +45,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
         currentUser={session.user}
         otherUser={otherUser}
         product={conversation.product}
+        initialLastActive={data.otherUserLastActive ? data.otherUserLastActive.toISOString() : null}
       />
     </div>
   );

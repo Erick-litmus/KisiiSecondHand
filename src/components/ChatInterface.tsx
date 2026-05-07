@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { sendMessage } from "@/lib/actions/chat";
 import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import ReportUserButton from "./ReportUserButton";
 
 interface ChatInterfaceProps {
@@ -13,6 +13,7 @@ interface ChatInterfaceProps {
   currentUser: any;
   otherUser: any;
   product: any;
+  initialLastActive?: string | null;
 }
 
 export default function ChatInterface({ 
@@ -20,12 +21,14 @@ export default function ChatInterface({
   initialMessages, 
   currentUser, 
   otherUser,
-  product
+  product,
+  initialLastActive
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
+  const [lastActiveDate, setLastActiveDate] = useState<string | null>(initialLastActive || null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom
@@ -34,6 +37,15 @@ export default function ChatInterface({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Initial online check
+  useEffect(() => {
+    if (initialLastActive) {
+      const lastActive = new Date(initialLastActive).getTime();
+      const now = new Date().getTime();
+      setOtherUserOnline(now - lastActive < 30000);
+    }
+  }, [initialLastActive]);
 
   // Simple polling for new messages (every 5 seconds)
   useEffect(() => {
@@ -52,6 +64,7 @@ export default function ChatInterface({
             
             // Check if other user is online (active in last 30 seconds)
             if (data.otherUserLastActive) {
+              setLastActiveDate(data.otherUserLastActive);
               const lastActive = new Date(data.otherUserLastActive).getTime();
               const now = new Date().getTime();
               setOtherUserOnline(now - lastActive < 30000);
@@ -105,7 +118,7 @@ export default function ChatInterface({
                 "text-[10px] font-black uppercase tracking-widest transition-colors",
                 otherUserOnline ? "text-emerald-500" : "text-slate-400"
               )}>
-                {otherUserOnline ? "Online" : "Offline"}
+                {otherUserOnline ? "Online" : lastActiveDate ? `Last seen ${formatRelativeTime(lastActiveDate)}` : "Offline"}
               </p>
             </div>
           </div>
