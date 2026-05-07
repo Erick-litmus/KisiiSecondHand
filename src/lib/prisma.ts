@@ -3,17 +3,18 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
 const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL;
-  
-  const pool = new pg.Pool({ 
+  // Use DIRECT_URL to bypass pgbouncer — Prisma's pg adapter needs a direct connection
+  const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+  const pool = new pg.Pool({
     connectionString,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    max: 3,                          // Keep low for Supabase free tier
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,  // 10s — enough for cold Supabase connections
   });
 
   const adapter = new PrismaPg(pool);
-  
+
   return new PrismaClient({ adapter });
 };
 
