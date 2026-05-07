@@ -25,7 +25,7 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="px-6 w-full max-w-7xl mx-auto">
+    <div className="px-8 w-full max-w-7xl mx-auto">
       <form onSubmit={handleSearch} className="relative group">
         <button
           type="submit"

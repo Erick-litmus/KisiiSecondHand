@@ -27,9 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900`}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+      </head>
+      <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900 w-full min-h-screen overflow-x-hidden`}>
         <Navbar />
-        <main className="min-h-screen pt-20">
+        <main className="min-h-screen pt-20 w-full overflow-x-hidden">
           {children}
         </main>
         <BottomNav />

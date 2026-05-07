@@ -30,7 +30,7 @@ const CategoryPills = () => {
   };
 
   return (
-    <div className="flex items-center gap-6 overflow-x-auto pb-4 px-6 max-w-7xl mx-auto no-scrollbar">
+    <div className="flex items-center gap-6 overflow-x-auto pb-4 px-8 max-w-7xl mx-auto no-scrollbar">
       {CATEGORIES.map((cat) => {
         const isActive = active === cat.name;
 
@@ -39,7 +39,7 @@ const CategoryPills = () => {
             <button
               onClick={() => handleSelect(cat.name)}
               className={cn(
-                "w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-300 relative group",
+                "w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-300 relative group",
                 isActive
                   ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-md"
                   : "border border-slate-200 hover:border-emerald-300 hover:scale-105 shadow-sm"

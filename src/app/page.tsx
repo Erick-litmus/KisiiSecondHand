@@ -47,36 +47,33 @@ export default async function Home() {
           }}
         />
 
-        {/* Subtle bottom gradient so text is readable */}
+        {/* Stronger bottom gradient for better readability */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.55) 100%)",
+              "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0) 100%)",
             zIndex: 1,
           }}
         />
 
-        {/* Hero content */}
+        {/* Hero content - increased padding to prevent cut-off */}
         <div
-          className="relative flex flex-col justify-end px-6 pb-10 gap-3"
+          className="relative flex flex-col justify-end px-8 sm:px-12 pb-12 gap-4"
           style={{ zIndex: 2, minHeight: "480px" }}
         >
           <span
-            className="inline-block self-start bg-emerald-500/30 border border-emerald-400/60 text-white text-xs font-semibold uppercase tracking-widest rounded-full px-4 py-1 backdrop-blur-sm"
-            style={{ textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}
+            className="inline-block self-start bg-emerald-500/40 border border-emerald-400/60 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full px-4 py-1 backdrop-blur-sm shadow-lg"
           >
             Kisii University Campus
           </span>
           <h1
-            className="text-3xl sm:text-4xl font-extrabold text-white leading-tight"
-            style={{ textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
+            className="text-3xl sm:text-5xl font-black text-white leading-tight drop-shadow-lg"
           >
-            Kisii Secondhand <span className="text-emerald-300">Marketplace</span>
+            Kisii Secondhand <span className="text-emerald-400">Marketplace</span>
           </h1>
           <p
-            className="text-slate-100 text-sm sm:text-base max-w-lg"
-            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}
+            className="text-slate-200 text-sm sm:text-base max-w-lg font-medium leading-relaxed drop-shadow-md"
           >
             Buy &amp; sell quality items within the Kisii University community. Safe, simple, and local.
           </p>

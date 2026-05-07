@@ -8,7 +8,7 @@ interface ListingGridProps {
 
 const ListingGrid = ({ products, userId }: ListingGridProps) => {
   return (
-    <div className="px-6 max-w-7xl mx-auto">
+    <div className="px-8 max-w-7xl mx-auto">
       {products.length === 0 ? (
         <div className="py-20 text-center text-slate-500">
           <p>No products found. Try a different search or category!</p>
