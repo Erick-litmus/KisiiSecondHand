@@ -43,6 +43,7 @@ model User {
   
   savedItems SavedItem[]
 
+  lastActive DateTime @default(now())
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt 
 }

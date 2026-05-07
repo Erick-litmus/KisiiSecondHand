@@ -89,6 +89,10 @@ const Navbar = () => {
     window.location.href = "/";
   };
 
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+
+  if (isChatPage) return null;
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">

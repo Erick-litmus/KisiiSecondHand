@@ -25,6 +25,10 @@ const BottomNav = () => {
     { label: "Account", icon: User, path: session ? "/dashboard" : "/login" },
   ];
 
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+
+  if (isChatPage) return null;
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-xl border-t border-white/5 px-6 py-4 pb-8">
       <div className="flex items-center justify-between">

@@ -34,14 +34,14 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
     redirect("/messages");
   }
 
-  const initialMessages = await getMessages(id);
+  const data = await getMessages(id);
   const otherUser = isBuyer ? conversation.seller : conversation.buyer;
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-[#0a0a0a]">
+    <div className="h-screen bg-[#0a0a0a]">
       <ChatInterface 
         conversationId={id}
-        initialMessages={initialMessages}
+        initialMessages={data.messages || []}
         currentUser={session.user}
         otherUser={otherUser}
         product={conversation.product}

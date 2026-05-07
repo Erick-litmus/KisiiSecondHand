@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "The ultimate student marketplace for Kisii University. Buy and sell textbooks, electronics, furniture, and more.",
 };
 
+import MainContainer from "@/components/MainContainer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,9 +34,9 @@ export default function RootLayout({
       </head>
       <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900 w-full min-h-screen overflow-x-hidden`}>
         <Navbar />
-        <main className="min-h-screen pt-20 w-full overflow-x-hidden">
+        <MainContainer>
           {children}
-        </main>
+        </MainContainer>
         <BottomNav />
         <Footer />
       </body>

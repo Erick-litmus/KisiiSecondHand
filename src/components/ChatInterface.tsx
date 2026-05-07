@@ -25,6 +25,7 @@ export default function ChatInterface({
   const [messages, setMessages] = useState(initialMessages);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom
@@ -38,10 +39,24 @@ export default function ChatInterface({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/messages/${conversationId}`);
+        const response = await fetch(`/api/messages/${conversationId}`, { cache: "no-store" });
         if (response.ok) {
-          const newMessages = await response.json();
-          setMessages(newMessages);
+          const data = await response.json();
+          if (data && Array.isArray(data.messages)) {
+            // Only update if we have new messages or status changed
+            setMessages(prev => {
+              // Simple check: if lengths are different or status might have changed
+              if (prev.length !== data.messages.length) return data.messages;
+              return prev;
+            });
+            
+            // Check if other user is online (active in last 30 seconds)
+            if (data.otherUserLastActive) {
+              const lastActive = new Date(data.otherUserLastActive).getTime();
+              const now = new Date().getTime();
+              setOtherUserOnline(now - lastActive < 30000);
+            }
+          }
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -61,7 +76,7 @@ export default function ChatInterface({
 
     const result = await sendMessage(conversationId, text);
     if (result.success) {
-      setMessages([...messages, result.message]);
+      setMessages(prev => [...prev, result.message]);
     } else {
       alert("Failed to send message");
       setInputText(text); // Restore text on failure
@@ -86,21 +101,17 @@ export default function ChatInterface({
                 {otherUser.name || "User"}
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               </h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Now</p>
+              <p className={cn(
+                "text-[10px] font-black uppercase tracking-widest transition-colors",
+                otherUserOnline ? "text-emerald-500" : "text-slate-400"
+              )}>
+                {otherUserOnline ? "Online" : "Offline"}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href={`/product/${product.id}`} className="hidden sm:flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 hover:border-emerald-500/30 transition-all shadow-sm group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-white/10">
-              <img src={product.image} className="w-full h-full object-cover" alt="" />
-            </div>
-            <div className="pr-4">
-               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Inquiry about</div>
-               <div className="text-xs font-bold text-white truncate max-w-[120px]">{product.title}</div>
-            </div>
-          </Link>
           <ReportUserButton userId={otherUser.id} userName={otherUser.name || "Unknown User"} />
         </div>
       </div>
@@ -140,8 +151,19 @@ export default function ChatInterface({
                     </span>
                     {isMe && (
                       <div className="flex -space-x-1">
-                        <span className="text-[10px] text-[#53bdeb]">✓</span>
-                        <span className="text-[10px] text-[#53bdeb]">✓</span>
+                        {/* First Tick (Sent) */}
+                        <span className={cn(
+                          "text-[10px]",
+                          msg.isRead ? "text-[#53bdeb]" : "text-white/50"
+                        )}>✓</span>
+                        
+                        {/* Second Tick (Delivered/Read) */}
+                        {(otherUserOnline || msg.isRead) && (
+                          <span className={cn(
+                            "text-[10px]",
+                            msg.isRead ? "text-[#53bdeb]" : "text-white/50"
+                          )}>✓</span>
+                        )}
                       </div>
                     )}
                   </div>

@@ -1,8 +1,16 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Store, Mail, Phone, MapPin, Share2, Globe, MessageSquare } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const Footer = () => {
+  const pathname = usePathname();
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+
+  if (isChatPage) return null;
+
   return (
     <footer className="bg-white text-slate-500 py-16 px-6 border-t border-slate-100">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">

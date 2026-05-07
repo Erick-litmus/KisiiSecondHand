@@ -5,6 +5,38 @@ import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
 
+export async function updateLastActive() {
+  const session = await getSession();
+  if (!session) return;
+
+  try {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { lastActive: new Date() },
+    });
+  } catch (err) {
+    console.error("Failed to update last active:", err);
+  }
+}
+
+export async function markMessagesAsRead(conversationId: string) {
+  const session = await getSession();
+  if (!session) return;
+
+  try {
+    await prisma.message.updateMany({
+      where: {
+        conversationId,
+        senderId: { not: session.user.id },
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+  } catch (err) {
+    console.error("Failed to mark messages as read:", err);
+  }
+}
+
 export async function createConversation(productId: string, sellerId: string) {
   const session = await getSession();
   if (!session) return { error: "You must be logged in to chat" };
@@ -158,7 +190,7 @@ export async function sendMessage(conversationId: string, text: string) {
       // Don't fail the message sending if email fails
     }
 
-    return { success: true, message };
+    return { success: true, message: { ...message, sender: { name: session.user.name } } };
   } catch (err) {
     console.error("Failed to send message:", err);
     return { error: "Failed to send message" };
@@ -190,26 +222,57 @@ export async function getConversations() {
 
 export async function getMessages(conversationId: string) {
   const session = await getSession();
-  if (!session) return [];
+  if (!session) return { messages: [], otherUserLastActive: null };
 
   const userId = session.user.id;
 
-  // Check if user belongs to conversation or is admin
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    select: { buyerId: true, sellerId: true },
-  });
+  try {
+    // Check if user belongs to conversation or is admin
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { buyerId: true, sellerId: true },
+    });
 
-  if (!conversation && session.user.role !== "ADMIN") return [];
-  if (session.user.role !== "ADMIN" && conversation?.buyerId !== userId && conversation?.sellerId !== userId) {
-    return [];
+    const isAdmin = session.user.role === "ADMIN";
+    const isParticipant = conversation && (conversation.buyerId === userId || conversation.sellerId === userId);
+
+    if (!isAdmin && !isParticipant) {
+      return { messages: [], otherUserLastActive: null };
+    }
+
+    const messages = await prisma.message.findMany({
+      where: { conversationId },
+      include: {
+        sender: { select: { name: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Get other user's last active if conversation exists
+    let otherUserLastActive = null;
+    if (conversation) {
+      const otherUserId = conversation.buyerId === userId ? conversation.sellerId : conversation.buyerId;
+      
+      if (otherUserId) {
+        try {
+          const otherUser = await prisma.user.findUnique({
+            where: { id: otherUserId },
+            select: { lastActive: true },
+          });
+          otherUserLastActive = otherUser?.lastActive || null;
+        } catch (findErr) {
+          console.error("Failed to fetch other user status:", findErr);
+        }
+      }
+    }
+
+    return {
+      messages,
+      otherUserLastActive,
+    };
+  } catch (err) {
+    console.error("Error in getMessages:", err);
+    return { messages: [], otherUserLastActive: null };
   }
-
-  return await prisma.message.findMany({
-    where: { conversationId },
-    include: {
-      sender: { select: { name: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
 }
+
