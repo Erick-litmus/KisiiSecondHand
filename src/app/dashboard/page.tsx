@@ -73,7 +73,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-12">
         <div>
           <h1 className="text-5xl font-black mb-3 tracking-tight text-slate-900">Seller <span className="text-emerald-600">Dashboard</span></h1>
-          <p className="text-lg text-slate-500 font-medium italic">Welcome back, {session.user.name.split(' ')[0]}! Manage your campus listings here.</p>
+          <p className="text-lg text-slate-500 font-medium italic">Welcome back, {(session.user.name || "User").split(' ')[0]}! Manage your campus listings here.</p>
         </div>
         <Link href="/sell" className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-xs flex items-center gap-3 transition-all shadow-xl shadow-emerald-600/20 hover:-translate-y-1">
           <Plus className="w-5 h-5" />
@@ -181,10 +181,10 @@ export default async function DashboardPage() {
                   return (
                     <div key={conv.id} className="flex gap-4 group">
                        <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center font-black text-amber-700 shrink-0">
-                          {otherUser.name[0].toUpperCase()}
+                          {otherUser.name ? otherUser.name[0].toUpperCase() : "U"}
                        </div>
                        <div className="min-w-0">
-                          <div className="text-sm font-black text-slate-800 mb-1">{otherUser.name}</div>
+                          <div className="text-sm font-black text-slate-800 mb-1">{otherUser.name || "User"}</div>
                           <p className="text-xs text-slate-500 line-clamp-2 mb-3 font-medium">"{lastMessage}"</p>
                           <Link href={`/messages/${conv.id}`} className="text-[10px] text-emerald-600 font-black uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all group">
                             Open Chat <MessageSquare className="w-3 h-3 transition-transform group-hover:rotate-12" />
