@@ -1,40 +1,25 @@
+import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 
-// Define the transport configuration
-// In development, this relies on SMTP_USER and SMTP_PASS environment variables
-// which should be your Gmail address and App Password.
-const isResend = !!process.env.RESEND_API_KEY;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-if (isResend) {
-  console.log("📨 Email Service: Initializing with RESEND SMTP");
-} else {
-  console.log("📨 Email Service: Initializing with GMAIL SMTP (Fallback)");
-}
-
+// Fallback transporter for Gmail
 const transporter = nodemailer.createTransport({
-  host: isResend ? 'smtp.resend.com' : 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
-    user: isResend ? 'resend' : (process.env.SMTP_USER || "").trim(),
-    pass: isResend ? process.env.RESEND_API_KEY : (process.env.SMTP_PASS || "").replace(/\s/g, ''),
+    user: (process.env.SMTP_USER || "").trim(),
+    pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
   },
 });
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
-  const isResendConfigured = !!process.env.RESEND_API_KEY;
+  const isResendConfigured = !!resend;
   const isGmailConfigured = !!process.env.SMTP_USER && !!process.env.SMTP_PASS;
 
   if (!isResendConfigured && !isGmailConfigured) {
-    console.error("Missing Email credentials (Resend or SMTP) in environment variables.");
-    // In dev environment without credentials, just log the OTP
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`\n\n=== DEVELOPMENT OTP FOR ${email} ===`);
-      console.log(`CODE: ${otpCode}`);
-      console.log(`===========================================\n\n`);
-      return { success: true, message: "Logged to console" };
-    }
-    return { error: "Email service is not configured" };
+    console.log("📨 No email service configured. Logging OTP to terminal.");
+    console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
+    return { success: true, message: "Logged to console" };
   }
 
   const htmlContent = `
@@ -68,18 +53,32 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
   `;
 
   try {
-    // If using Resend without a verified domain, we MUST use onboarding@resend.dev
-    const fromAddress = isResend ? 'onboarding@resend.dev' : process.env.SMTP_USER;
+    if (resend) {
+      console.log("📨 Sending email via Resend SDK...");
+      const { data, error } = await resend.emails.send({
+        from: 'Kisii Market <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Verify your email - Kisii Market',
+        html: htmlContent,
+      });
 
-    const info = await transporter.sendMail({
-      from: `"Kisii Market" <${fromAddress}>`,
-      to: email,
-      subject: "Verify your email - Kisii Market",
-      html: htmlContent,
-    });
-
-    console.log("Message sent: %s", info.messageId);
-    return { success: true };
+      if (error) {
+        console.error("Resend Error:", error);
+        throw new Error(error.message);
+      }
+      
+      console.log("Resend Success:", data);
+      return { success: true };
+    } else {
+      console.log("📨 Sending email via Gmail SMTP...");
+      await transporter.sendMail({
+        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Verify your email - Kisii Market",
+        html: htmlContent,
+      });
+      return { success: true };
+    }
   } catch (error: any) {
     console.error("Error sending email:", error);
     return { error: error.message };
@@ -87,15 +86,8 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error("Missing SMTP credentials in environment variables.");
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`\n\n=== DEVELOPMENT RESET TOKEN FOR ${email} ===`);
-      console.log(`TOKEN: ${token}`);
-      console.log(`LINK: http://localhost:3000/reset-password?token=${token}`);
-      console.log(`===========================================\n\n`);
-      return { success: true, message: "Logged to console" };
-    }
+  // Simple check for config
+  if (!resend && (!process.env.SMTP_USER || !process.env.SMTP_PASS)) {
     return { error: "Email service is not configured" };
   }
 
@@ -133,18 +125,24 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   `;
 
   try {
-    const info = await transporter.sendMail({
-      from: '"Kisii Market" <' + process.env.SMTP_USER + '>',
-      to: email,
-      subject: "Password Reset Request - Kisii Market",
-      html: htmlContent,
-    });
-
-    console.log("Message sent: %s", info.messageId);
-    return { success: true };
+    if (resend) {
+      await resend.emails.send({
+        from: 'Kisii Market <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Password Reset Request - Kisii Market',
+        html: htmlContent,
+      });
+      return { success: true };
+    } else {
+      await transporter.sendMail({
+        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Password Reset Request - Kisii Market",
+        html: htmlContent,
+      });
+      return { success: true };
+    }
   } catch (error: any) {
-    console.error("Error sending email:", error);
     return { error: error.message };
   }
 }
-
