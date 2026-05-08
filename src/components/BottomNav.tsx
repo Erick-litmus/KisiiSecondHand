@@ -9,8 +9,10 @@ import { cn } from "@/lib/utils";
 const BottomNav = () => {
   const pathname = usePathname();
   const [session, setSession] = React.useState<any>(null);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setMounted(true);
     fetch("/api/auth/session")
       .then((res) => res.json())
       .then((data) => setSession(data))
@@ -27,7 +29,7 @@ const BottomNav = () => {
 
   const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
 
-  if (isChatPage) return null;
+  if (!mounted || isChatPage) return null;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#8122e4] via-[#e21b5a] to-[#f1840b] border-t border-white/10 px-6 py-2 pb-5 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
