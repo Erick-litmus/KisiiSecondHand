@@ -3,12 +3,15 @@ import nodemailer from 'nodemailer';
 // Define the transport configuration
 // In development, this relies on SMTP_USER and SMTP_PASS environment variables
 // which should be your Gmail address and App Password.
+const isResend = !!process.env.RESEND_API_KEY;
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: isResend ? 'smtp.resend.com' : 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
-    // Clean spaces from credentials automatically
-    user: (process.env.SMTP_USER || "").trim(),
-    pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
+    user: isResend ? 'resend' : (process.env.SMTP_USER || "").trim(),
+    pass: isResend ? process.env.RESEND_API_KEY : (process.env.SMTP_PASS || "").replace(/\s/g, ''),
   },
 });
 
@@ -56,8 +59,11 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
   `;
 
   try {
+    // If using Resend without a verified domain, we MUST use onboarding@resend.dev
+    const fromAddress = isResend ? 'onboarding@resend.dev' : process.env.SMTP_USER;
+
     const info = await transporter.sendMail({
-      from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+      from: `"Kisii Market" <${fromAddress}>`,
       to: email,
       subject: "Verify your email - Kisii Market",
       html: htmlContent,
