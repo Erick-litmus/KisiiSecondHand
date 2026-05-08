@@ -21,9 +21,11 @@ import Link from "next/link";
 export default function SellPage() {
   const [step, setStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imagePreview2, setImagePreview2] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState<0 | 1>(0); // which thumbnail is shown in main view
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
@@ -69,19 +71,24 @@ export default function SellPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Local preview
+    const slotIndex = isSecond ? 1 : 0;
+
+    // Local preview immediately
     const reader = new FileReader();
     reader.onloadend = () => {
       if (isSecond) {
         setImagePreview2(reader.result as string);
+        setActiveImage(1); // switch main view to the new image
       } else {
         setImagePreview(reader.result as string);
+        setActiveImage(0);
       }
     };
     reader.readAsDataURL(file);
 
     // Upload to API
     setIsUploading(true);
+    setUploadingSlot(slotIndex);
     setErrorMessage(null);
     const uploadData = new FormData();
     uploadData.append("file", file);
@@ -112,6 +119,7 @@ export default function SellPage() {
       }
     } finally {
       setIsUploading(false);
+      setUploadingSlot(null);
     }
   };
 
@@ -234,79 +242,133 @@ export default function SellPage() {
         <div className="w-full">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
-            {/* Image Upload — supports gallery, camera, WhatsApp downloads, HEIC (iOS) */}
-            <div className="space-y-2">
+            {/* E-commerce image gallery upload */}
+            <div className="space-y-3">
               <label className="text-xs font-black text-sky-400 uppercase tracking-widest block">Photos</label>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Main photo */}
-                <div
-                  className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all touch-manipulation"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => handleFileChange(e, false)}
-                    accept="image/*,.heic,.heif"
-                    className="hidden"
-                  />
-                  {imagePreview ? (
-                    <>
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={(e) => removeImage(e, false)}
-                        className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10 touch-manipulation"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center">
-                      <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-sky-400" />
-                      </div>
-                      <p className="text-xs font-bold text-slate-400">Main Photo</p>
-                      <p className="text-[10px] text-slate-600">Gallery · Camera · WhatsApp</p>
-                    </div>
-                  )}
-                </div>
 
-                {/* Second photo */}
-                <div
-                  className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all touch-manipulation"
-                  onClick={() => fileInputRef2.current?.click()}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef2}
-                    onChange={(e) => handleFileChange(e, true)}
-                    accept="image/*,.heic,.heif"
-                    className="hidden"
-                  />
-                  {imagePreview2 ? (
-                    <>
-                      <img src={imagePreview2} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={(e) => removeImage(e, true)}
-                        className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10 touch-manipulation"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center">
-                      <div className="w-12 h-12 bg-slate-500/10 rounded-2xl flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-slate-500" />
+              {/* Main large preview */}
+              <div className="relative w-full aspect-square bg-[#1a1a1a] rounded-2xl border border-white/5 overflow-hidden flex items-center justify-center">
+                {(activeImage === 0 ? imagePreview : imagePreview2) ? (
+                  <>
+                    <img
+                      src={(activeImage === 0 ? imagePreview : imagePreview2)!}
+                      alt="Main preview"
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Upload spinner overlay */}
+                    {uploadingSlot === activeImage && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                       </div>
-                      <p className="text-xs font-bold text-slate-500">Extra Photo</p>
-                      <p className="text-[10px] text-slate-600">Optional</p>
+                    )}
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={(e) => removeImage(e, activeImage === 1)}
+                      className="absolute top-3 right-3 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10 touch-manipulation"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => activeImage === 0 ? fileInputRef.current?.click() : fileInputRef2.current?.click()}
+                    className="flex flex-col items-center gap-3 p-8 w-full h-full justify-center touch-manipulation"
+                  >
+                    {uploadingSlot === activeImage ? (
+                      <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-sky-500/10 rounded-3xl flex items-center justify-center">
+                          <Camera className="w-8 h-8 text-sky-400" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-slate-300">
+                            {activeImage === 0 ? "Tap to add main photo" : "Tap to add extra photo"}
+                          </p>
+                          <p className="text-xs text-slate-600 mt-1">Gallery · Camera · WhatsApp · HEIC</p>
+                        </div>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Thumbnail strip */}
+              <div className="flex gap-3">
+                {/* Slot 1 thumbnail */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (imagePreview) {
+                      setActiveImage(0);
+                    } else {
+                      setActiveImage(0);
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className={cn(
+                    "relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all touch-manipulation",
+                    activeImage === 0
+                      ? "border-emerald-500 shadow-lg shadow-emerald-500/20"
+                      : "border-white/10"
+                  )}
+                >
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Photo 1" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[#1a1a1a] flex flex-col items-center justify-center gap-1">
+                      <Camera className="w-5 h-5 text-slate-600" />
+                      <span className="text-[9px] text-slate-600 font-bold">Photo 1</span>
                     </div>
                   )}
-                </div>
+                  {uploadingSlot === 0 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Slot 2 thumbnail */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (imagePreview2) {
+                      setActiveImage(1);
+                    } else {
+                      setActiveImage(1);
+                      fileInputRef2.current?.click();
+                    }
+                  }}
+                  className={cn(
+                    "relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all touch-manipulation",
+                    activeImage === 1
+                      ? "border-emerald-500 shadow-lg shadow-emerald-500/20"
+                      : "border-white/10"
+                  )}
+                >
+                  {imagePreview2 ? (
+                    <img src={imagePreview2} alt="Photo 2" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[#1a1a1a] flex flex-col items-center justify-center gap-1">
+                      <Camera className="w-5 h-5 text-slate-600" />
+                      <span className="text-[9px] text-slate-600 font-bold">+ Add</span>
+                    </div>
+                  )}
+                  {uploadingSlot === 1 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Hidden file inputs */}
+                <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e, false)} accept="image/*,.heic,.heif" className="hidden" />
+                <input type="file" ref={fileInputRef2} onChange={(e) => handleFileChange(e, true)} accept="image/*,.heic,.heif" className="hidden" />
               </div>
-              <p className="text-[10px] text-slate-600 text-center">Supports JPEG, PNG, HEIC, WebP · Max 10MB per photo</p>
+
+              <p className="text-[10px] text-slate-600">JPEG · PNG · HEIC · WebP · Max 10MB</p>
             </div>
 
             <div className="space-y-6">
