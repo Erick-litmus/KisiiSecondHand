@@ -1,19 +1,24 @@
 import nodemailer from 'nodemailer';
 
-// Define the transport configuration using Gmail
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    // Clean spaces automatically to prevent "BadCredentials" errors
-    user: (process.env.SMTP_USER || "").trim(),
-    pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
-  },
-});
+// Helper function to get a fresh transporter with latest .env values
+const getTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      // Clean spaces automatically to prevent "BadCredentials" errors
+      user: (process.env.SMTP_USER || "").trim(),
+      pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
+    },
+  });
+};
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
-  // Check if Gmail is configured
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.log("📨 Gmail not configured. Logging OTP to terminal.");
+  const smtpUser = (process.env.SMTP_USER || "").trim();
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s/g, '');
+
+  // Check if Gmail is configured with fresh values
+  if (!smtpUser || !smtpPass) {
+    console.log("📨 Gmail not configured in .env. Logging OTP to terminal.");
     console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
     return { success: true, message: "Logged to console" };
   }
@@ -49,8 +54,9 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
   `;
 
   try {
+    const transporter = getTransporter();
     const info = await transporter.sendMail({
-      from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+      from: `"Kisii Market" <${smtpUser}>`,
       to: email,
       subject: "Verify your email - Kisii Market",
       html: htmlContent,
@@ -60,14 +66,17 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error sending email:", error);
-    // Even if it fails, log the code so you aren't blocked
+    // Log code to terminal so you aren't blocked
     console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
     return { error: error.message };
   }
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  const smtpUser = (process.env.SMTP_USER || "").trim();
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s/g, '');
+
+  if (!smtpUser || !smtpPass) {
     return { error: "Email service is not configured" };
   }
 
@@ -105,8 +114,9 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   `;
 
   try {
+    const transporter = getTransporter();
     await transporter.sendMail({
-      from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+      from: `"Kisii Market" <${smtpUser}>`,
       to: email,
       subject: "Password Reset Request - Kisii Market",
       html: htmlContent,
