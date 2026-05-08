@@ -4,13 +4,14 @@ import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { login } from "@/lib/actions/auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Mail, Lock, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const callback = searchParams.get("callback") || "/";
@@ -109,12 +110,20 @@ function LoginContent() {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="block w-full bg-[#161616] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium"
+                  className="block w-full bg-[#161616] border border-white/5 rounded-2xl py-4 pl-14 pr-14 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500/50 transition-all text-sm font-medium"
                   placeholder="••••••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-500 hover:text-emerald-500 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
               <div className="flex justify-start pt-2 ml-1">
                 <Link href="/forgot-password" className="text-sm font-bold text-emerald-500 hover:text-emerald-400 transition-colors py-1 inline-block">
