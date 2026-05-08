@@ -5,6 +5,12 @@ import nodemailer from 'nodemailer';
 // which should be your Gmail address and App Password.
 const isResend = !!process.env.RESEND_API_KEY;
 
+if (isResend) {
+  console.log("📨 Email Service: Initializing with RESEND SMTP");
+} else {
+  console.log("📨 Email Service: Initializing with GMAIL SMTP (Fallback)");
+}
+
 const transporter = nodemailer.createTransport({
   host: isResend ? 'smtp.resend.com' : 'smtp.gmail.com',
   port: 465,
