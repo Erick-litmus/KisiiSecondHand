@@ -13,6 +13,7 @@ import {
   Package
 } from "lucide-react";
 import AdminSearch from "@/components/AdminSearch";
+import DeleteProductButton from "@/components/DeleteProductButton";
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const params = await searchParams;
@@ -134,14 +135,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                           </button>
                         </form>
                       )}
-                      <form action={async () => {
-                        "use server";
-                        await deleteProduct(product.id);
-                      }}>
-                        <button className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm" title="Delete">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </form>
+                      <DeleteProductButton productId={product.id} />
                     </div>
                   </td>
                 </tr>
