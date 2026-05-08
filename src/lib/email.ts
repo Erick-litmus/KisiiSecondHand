@@ -32,42 +32,26 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
   }
 
   const htmlContent = `
-    <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f8fafc; border-radius: 24px;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10b981 0%, #0d9488 100%); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);">
-          <span style="color: white; font-weight: 900; font-size: 24px; font-style: italic;">K</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">Kisii Market</h1>
+    <div style="font-family: sans-serif; max-w: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px;">
+      <h2 style="color: #10b981; margin-top: 0;">Kisii Market Verification</h2>
+      <p style="color: #475569; font-size: 16px;">Hello! Please use the 6-digit code below to verify your account on Kisii Market:</p>
+      <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #0f172a;">${otpCode}</span>
       </div>
-      
-      <div style="background-color: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);">
-        <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 24px; font-size: 20px; font-weight: 800;">Verify your email address</h2>
-        <p style="color: #64748b; font-size: 16px; line-height: 24px; margin-bottom: 32px;">
-          Thanks for joining Kisii Market! Please use the following 6-digit code to verify your university email address. This code will expire in 15 minutes.
-        </p>
-        
-        <div style="background-color: #f1f5f9; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 32px;">
-          <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #10b981;">${otpCode}</span>
-        </div>
-        
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 0;">
-          If you didn't request this email, you can safely ignore it.
-        </p>
-      </div>
-      
-      <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-        <p>© ${new Date().getFullYear()} Kisii Market. All rights reserved.</p>
-      </div>
+      <p style="color: #94a3b8; font-size: 12px;">This code expires in 15 minutes. If you did not request this, please ignore this email.</p>
     </div>
   `;
+
+  const textContent = `Your Kisii Market verification code is: ${otpCode}. This code expires in 15 minutes.`;
 
   try {
     const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: `"Kisii Market" <${smtpUser}>`,
       to: email,
-      subject: "Verify your email - Kisii Market",
+      subject: `${otpCode} is your Kisii Market code`, // Putting the code in the subject helps users see it immediately
       html: htmlContent,
+      text: textContent, // Plain text fallback is GREAT for inbox delivery
     });
 
     console.log("Message sent: %s", info.messageId);
