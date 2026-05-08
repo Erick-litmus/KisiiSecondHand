@@ -83,7 +83,8 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     return { error: "Email service is not configured" };
   }
 
-  const resetLink = `http://localhost:3000/reset-password?token=${token}`; // In production, this should be the actual domain
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f8fafc; border-radius: 24px;">

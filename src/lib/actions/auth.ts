@@ -49,7 +49,11 @@ export async function register(formData: any) {
         },
       });
 
-      await sendVerificationEmail(email, otpCode);
+      const emailResult = await sendVerificationEmail(email, otpCode);
+      if (emailResult.error) {
+        console.error("Failed to send verification email:", emailResult.error);
+        return { error: "Account updated but failed to send verification email. Check SMTP settings." };
+      }
       return { success: true, email };
     }
 
@@ -75,7 +79,13 @@ export async function register(formData: any) {
     console.log("User created with ID:", user.id);
     
     // Send verification email
-    await sendVerificationEmail(email, otpCode);
+    const emailResult = await sendVerificationEmail(email, otpCode);
+    if (emailResult.error) {
+      console.error("Failed to send verification email:", emailResult.error);
+      // Still return success so the user knows account was created,
+      // but include an email warning
+      return { success: true, email, emailWarning: "Account created but verification email failed to send. Contact support." };
+    }
     
     // Note: We don't set the auth session yet. They must verify first.
     return { success: true, email };
