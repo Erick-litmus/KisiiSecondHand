@@ -62,6 +62,9 @@ function VerifyContent() {
         <p className="mt-4 text-center text-sm text-slate-400 font-medium max-w-sm mx-auto">
           We sent a 6-digit verification code to <span className="text-white font-bold">{email}</span>. The code expires in 15 minutes.
         </p>
+        <p className="mt-2 text-center text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">
+          Check your Spam or Promotions folder if you don't see it!
+        </p>
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
