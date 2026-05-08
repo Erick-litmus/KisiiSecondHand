@@ -4,9 +4,7 @@ import nodemailer from 'nodemailer';
 // In development, this relies on SMTP_USER and SMTP_PASS environment variables
 // which should be your Gmail address and App Password.
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
     // Clean spaces from credentials automatically
     user: (process.env.SMTP_USER || "").trim(),
