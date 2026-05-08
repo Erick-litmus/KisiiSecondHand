@@ -64,6 +64,15 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
 
       if (error) {
         console.error("Resend Error:", error);
+        
+        // Check if it's the "testing emails" restriction error
+        if (error.name === 'validation_error' && error.message.includes('testing emails')) {
+          console.log("\n\n⚠️  RESEND SANDBOX MODE: Recipient is not your own email.");
+          console.log(`🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑`);
+          console.log("Check your terminal for the code since this is a test recipient.\n\n");
+          return { success: true, message: "Logged to console due to Resend sandbox" };
+        }
+        
         throw new Error(error.message);
       }
       
