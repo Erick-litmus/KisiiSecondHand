@@ -39,9 +39,39 @@ export async function rejectProduct(productId: string) {
 
 export async function deleteProduct(productId: string) {
   try {
+    // 1. Find all conversations related to this product
+    const conversations = await prisma.conversation.findMany({
+      where: { productId },
+      select: { id: true },
+    });
+    const conversationIds = conversations.map((c) => c.id);
+
+    // 2. Delete related messages and reports tied to those conversations
+    if (conversationIds.length > 0) {
+      await prisma.message.deleteMany({
+        where: { conversationId: { in: conversationIds } },
+      });
+      await prisma.report.deleteMany({
+        where: { conversationId: { in: conversationIds } },
+      });
+      await prisma.conversation.deleteMany({
+        where: { id: { in: conversationIds } },
+      });
+    }
+
+    // 3. Delete other records directly linked to the product
+    await prisma.savedItem.deleteMany({
+      where: { productId },
+    });
+    await prisma.report.deleteMany({
+      where: { productId },
+    });
+
+    // 4. Finally delete the product itself
     await prisma.product.delete({
       where: { id: productId },
     });
+
     revalidatePath("/admin");
     revalidatePath("/admin/products");
     revalidatePath("/");
