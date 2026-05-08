@@ -48,11 +48,14 @@ export async function register(formData: any) {
           otpExpiresAt,
         },
       });
+      
+      // FALLBACK: Always log the OTP to the terminal so the user can verify even if email fails
+      console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
 
       const emailResult = await sendVerificationEmail(email, otpCode);
       if (emailResult.error) {
         console.error("Failed to send verification email:", emailResult.error);
-        return { error: "Account updated but failed to send verification email. Check SMTP settings." };
+        return { success: true, email, emailWarning: "Account updated but email failed. Check your VS Code terminal for the code." };
       }
       return { success: true, email };
     }
@@ -78,13 +81,16 @@ export async function register(formData: any) {
 
     console.log("User created with ID:", user.id);
     
+    // FALLBACK: Always log the OTP to the terminal so the user can verify even if email fails
+    console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
+    
     // Send verification email
     const emailResult = await sendVerificationEmail(email, otpCode);
     if (emailResult.error) {
       console.error("Failed to send verification email:", emailResult.error);
       // Still return success so the user knows account was created,
       // but include an email warning
-      return { success: true, email, emailWarning: "Account created but verification email failed to send. Contact support." };
+      return { success: true, email, emailWarning: "Account created but verification email failed to send. Please check your VS Code terminal for the code." };
     }
     
     // Note: We don't set the auth session yet. They must verify first.
