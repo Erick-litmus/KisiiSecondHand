@@ -4,16 +4,14 @@ import nodemailer from 'nodemailer';
 // In development, this relies on SMTP_USER and SMTP_PASS environment variables
 // which should be your Gmail address and App Password.
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    // Clean spaces from credentials automatically
+    user: (process.env.SMTP_USER || "").trim(),
+    pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
   },
-  logger: true, // Log to console
-  debug: true,  // Include SMTP traffic in logs
 });
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
