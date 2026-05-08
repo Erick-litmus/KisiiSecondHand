@@ -22,8 +22,11 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error("Missing SMTP credentials in environment variables.");
+  const isResendConfigured = !!process.env.RESEND_API_KEY;
+  const isGmailConfigured = !!process.env.SMTP_USER && !!process.env.SMTP_PASS;
+
+  if (!isResendConfigured && !isGmailConfigured) {
+    console.error("Missing Email credentials (Resend or SMTP) in environment variables.");
     // In dev environment without credentials, just log the OTP
     if (process.env.NODE_ENV !== "production") {
       console.log(`\n\n=== DEVELOPMENT OTP FOR ${email} ===`);
