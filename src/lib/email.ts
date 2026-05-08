@@ -2,6 +2,14 @@ import nodemailer from 'nodemailer';
 
 // Helper function to get a fresh transporter with latest .env values
 const getTransporter = () => {
+  const smtpUser = (process.env.SMTP_USER || "").trim();
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s/g, '');
+  
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`🔐 Debug: SMTP User: ${smtpUser}`);
+    console.log(`🔐 Debug: SMTP Password Cleaned Length: ${smtpPass.length} characters`);
+  }
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
