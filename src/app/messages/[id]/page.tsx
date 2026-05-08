@@ -38,7 +38,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const otherUser = isBuyer ? conversation.seller : conversation.buyer;
 
   return (
-    <div className="h-screen bg-[#0a0a0a]">
+    <div className="h-dvh bg-[#0a0a0a]">
       <ChatInterface 
         conversationId={id}
         initialMessages={data.messages || []}

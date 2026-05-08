@@ -106,7 +106,7 @@ export default function ChatInterface({
   return (
     <div className="flex flex-col h-full w-full mx-auto bg-[#0a0a0a] border-x border-white/5 overflow-hidden">
       {/* Chat Header */}
-      <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0d0d0d]/50 backdrop-blur-md">
+      <div className="flex-shrink-0 p-4 border-b border-white/5 flex items-center justify-between bg-[#0d0d0d]/50 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <Link href="/messages" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all shadow-sm">
             <ChevronLeft className="w-5 h-5" />
@@ -138,7 +138,7 @@ export default function ChatInterface({
       {/* Messages Area */}
       <div 
         ref={scrollRef}
-        className="flex-grow overflow-y-auto p-6 space-y-3 no-scrollbar whatsapp-bg relative"
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar whatsapp-bg relative"
       >
         {messages.map((msg, i) => {
           const isMe = msg.senderId === currentUser.id;
@@ -194,21 +194,23 @@ export default function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <div className="p-6 bg-[#0d0d0d] border-t border-white/5">
-        <form onSubmit={handleSend} className="flex gap-3">
+      <div className="flex-shrink-0 p-3 bg-[#0d0d0d] border-t border-white/5">
+        <form onSubmit={handleSend} className="flex gap-2">
           <input 
             type="text"
+            inputMode="text"
+            enterKeyHint="send"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type a message..."
-            className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
+            className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
           />
           <button 
             type="submit"
             disabled={!inputText.trim() || isSending}
-            className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20 shrink-0"
+            className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20 shrink-0"
           >
-            <Send className="w-6 h-6" />
+            <Send className="w-5 h-5" />
           </button>
         </form>
       </div>
