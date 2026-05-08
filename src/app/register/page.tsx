@@ -138,7 +138,7 @@ export default function RegisterPage() {
                   type="file" 
                   ref={fileInputRef} 
                   onChange={handleFileChange} 
-                  accept="image/*" 
+                  accept="image/*,.heic,.heif" 
                   className="hidden" 
                 />
                 {imagePreview ? (

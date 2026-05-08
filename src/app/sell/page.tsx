@@ -234,36 +234,79 @@ export default function SellPage() {
         <div className="w-full">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border border-white/5 overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:bg-[#222] transition-all" onClick={() => fileInputRef.current?.click()}>
-                <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e, false)} accept="image/*" className="hidden" />
-                {imagePreview ? (
-                  <>
-                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button type="button" onClick={(e) => removeImage(e, false)} className="absolute top-4 right-4 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10"><X className="w-4 h-4" /></button>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-10 h-10 text-slate-500 mb-2" />
-                    <p className="text-sm font-bold text-slate-400">Main Photo</p>
-                  </>
-                )}
+            {/* Image Upload — supports gallery, camera, WhatsApp downloads, HEIC (iOS) */}
+            <div className="space-y-2">
+              <label className="text-xs font-black text-sky-400 uppercase tracking-widest block">Photos</label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Main photo */}
+                <div
+                  className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all touch-manipulation"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => handleFileChange(e, false)}
+                    accept="image/*,.heic,.heif"
+                    className="hidden"
+                  />
+                  {imagePreview ? (
+                    <>
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => removeImage(e, false)}
+                        className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10 touch-manipulation"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 p-4 text-center">
+                      <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center">
+                        <Camera className="w-6 h-6 text-sky-400" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-400">Main Photo</p>
+                      <p className="text-[10px] text-slate-600">Gallery · Camera · WhatsApp</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Second photo */}
+                <div
+                  className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all touch-manipulation"
+                  onClick={() => fileInputRef2.current?.click()}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef2}
+                    onChange={(e) => handleFileChange(e, true)}
+                    accept="image/*,.heic,.heif"
+                    className="hidden"
+                  />
+                  {imagePreview2 ? (
+                    <>
+                      <img src={imagePreview2} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => removeImage(e, true)}
+                        className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10 touch-manipulation"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 p-4 text-center">
+                      <div className="w-12 h-12 bg-slate-500/10 rounded-2xl flex items-center justify-center">
+                        <Camera className="w-6 h-6 text-slate-500" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-500">Extra Photo</p>
+                      <p className="text-[10px] text-slate-600">Optional</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className="relative group aspect-square bg-[#1a1a1a] rounded-2xl border border-white/5 overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:bg-[#222] transition-all" onClick={() => fileInputRef2.current?.click()}>
-                <input type="file" ref={fileInputRef2} onChange={(e) => handleFileChange(e, true)} accept="image/*" className="hidden" />
-                {imagePreview2 ? (
-                  <>
-                    <img src={imagePreview2} alt="Preview" className="w-full h-full object-cover" />
-                    <button type="button" onClick={(e) => removeImage(e, true)} className="absolute top-4 right-4 p-2 bg-rose-500 text-white rounded-full shadow-lg z-10"><X className="w-4 h-4" /></button>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-10 h-10 text-slate-500 mb-2" />
-                    <p className="text-sm font-bold text-slate-400 text-center px-4">Add Another Photo <br/>(Optional)</p>
-                  </>
-                )}
-              </div>
+              <p className="text-[10px] text-slate-600 text-center">Supports JPEG, PNG, HEIC, WebP · Max 10MB per photo</p>
             </div>
 
             <div className="space-y-6">
