@@ -1,23 +1,19 @@
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-// Fallback transporter for Gmail
+// Define the transport configuration using Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
+    // Clean spaces automatically to prevent "BadCredentials" errors
     user: (process.env.SMTP_USER || "").trim(),
     pass: (process.env.SMTP_PASS || "").replace(/\s/g, ''),
   },
 });
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
-  const isResendConfigured = !!resend;
-  const isGmailConfigured = !!process.env.SMTP_USER && !!process.env.SMTP_PASS;
-
-  if (!isResendConfigured && !isGmailConfigured) {
-    console.log("📨 No email service configured. Logging OTP to terminal.");
+  // Check if Gmail is configured
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log("📨 Gmail not configured. Logging OTP to terminal.");
     console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
     return { success: true, message: "Logged to console" };
   }
@@ -53,50 +49,25 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
   `;
 
   try {
-    if (resend) {
-      console.log("📨 Sending email via Resend SDK...");
-      const { data, error } = await resend.emails.send({
-        from: 'Kisii Market <onboarding@resend.dev>',
-        to: [email],
-        subject: 'Verify your email - Kisii Market',
-        html: htmlContent,
-      });
+    const info = await transporter.sendMail({
+      from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Verify your email - Kisii Market",
+      html: htmlContent,
+    });
 
-      if (error) {
-        console.error("Resend Error:", error);
-        
-        // Check if it's the "testing emails" restriction error
-        if (error.name === 'validation_error' && error.message.includes('testing emails')) {
-          console.log("\n\n⚠️  RESEND SANDBOX MODE: Recipient is not your own email.");
-          console.log(`🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑`);
-          console.log("Check your terminal for the code since this is a test recipient.\n\n");
-          return { success: true, message: "Logged to console due to Resend sandbox" };
-        }
-        
-        throw new Error(error.message);
-      }
-      
-      console.log("Resend Success:", data);
-      return { success: true };
-    } else {
-      console.log("📨 Sending email via Gmail SMTP...");
-      await transporter.sendMail({
-        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: "Verify your email - Kisii Market",
-        html: htmlContent,
-      });
-      return { success: true };
-    }
+    console.log("Message sent: %s", info.messageId);
+    return { success: true };
   } catch (error: any) {
     console.error("Error sending email:", error);
+    // Even if it fails, log the code so you aren't blocked
+    console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
     return { error: error.message };
   }
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  // Simple check for config
-  if (!resend && (!process.env.SMTP_USER || !process.env.SMTP_PASS)) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return { error: "Email service is not configured" };
   }
 
@@ -134,23 +105,13 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   `;
 
   try {
-    if (resend) {
-      await resend.emails.send({
-        from: 'Kisii Market <onboarding@resend.dev>',
-        to: [email],
-        subject: 'Password Reset Request - Kisii Market',
-        html: htmlContent,
-      });
-      return { success: true };
-    } else {
-      await transporter.sendMail({
-        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: "Password Reset Request - Kisii Market",
-        html: htmlContent,
-      });
-      return { success: true };
-    }
+    await transporter.sendMail({
+      from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Password Reset Request - Kisii Market",
+      html: htmlContent,
+    });
+    return { success: true };
   } catch (error: any) {
     return { error: error.message };
   }
