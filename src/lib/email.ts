@@ -31,27 +31,27 @@ export async function sendVerificationEmail(email: string, otpCode: string) {
     return { success: true, message: "Logged to console" };
   }
 
-  const htmlContent = `
-    <div style="font-family: sans-serif; max-w: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px;">
-      <h2 style="color: #10b981; margin-top: 0;">Kisii Market Verification</h2>
-      <p style="color: #475569; font-size: 16px;">Hello! Please use the 6-digit code below to verify your account on Kisii Market:</p>
-      <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-        <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #0f172a;">${otpCode}</span>
-      </div>
-      <p style="color: #94a3b8; font-size: 12px;">This code expires in 15 minutes. If you did not request this, please ignore this email.</p>
-    </div>
-  `;
+  const textContent = `
+Hello! 
 
-  const textContent = `Your Kisii Market verification code is: ${otpCode}. This code expires in 15 minutes.`;
+Your Kisii Market verification code is: ${otpCode}
+
+Please enter this 6-digit code on the website to verify your account. 
+This code will expire in 15 minutes.
+
+If you did not request this, you can safely ignore this message.
+
+Best regards,
+The Kisii Market Team
+  `;
 
   try {
     const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: `"Kisii Market" <${smtpUser}>`,
       to: email,
-      subject: `${otpCode} is your Kisii Market code`, // Putting the code in the subject helps users see it immediately
-      html: htmlContent,
-      text: textContent, // Plain text fallback is GREAT for inbox delivery
+      subject: `${otpCode} is your Kisii Market code`,
+      text: textContent,
     });
 
     console.log("Message sent: %s", info.messageId);
