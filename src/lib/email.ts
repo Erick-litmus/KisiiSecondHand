@@ -5,10 +5,15 @@ import nodemailer from 'nodemailer';
 // which should be your Gmail address and App Password.
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  logger: true, // Log to console
+  debug: true,  // Include SMTP traffic in logs
 });
 
 export async function sendVerificationEmail(email: string, otpCode: string) {
