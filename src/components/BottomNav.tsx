@@ -30,7 +30,7 @@ const BottomNav = () => {
   if (isChatPage) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#8122e4] via-[#e21b5a] to-[#f1840b] border-t border-white/10 px-6 py-4 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#8122e4] via-[#e21b5a] to-[#f1840b] border-t border-white/10 px-6 py-2 pb-5 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
       <div className="flex items-center justify-between">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -40,21 +40,21 @@ const BottomNav = () => {
             <Link
               key={item.label}
               href={item.path}
-              className="flex flex-col items-center gap-1.5 group"
+              className="flex flex-col items-center gap-0.5 group"
             >
               <div className={cn(
-                "p-2.5 rounded-2xl transition-all duration-300 relative",
+                "p-1.5 rounded-xl transition-all duration-300 relative",
                 isActive
-                  ? "bg-white/20 text-white scale-110 shadow-lg backdrop-blur-md"
+                  ? "bg-white/20 text-white scale-105 shadow-lg backdrop-blur-md"
                   : "text-white/60 hover:text-white"
               )}>
                 <Icon className="w-5 h-5" />
                 {item.label === "Inbox" && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-white rounded-full border-2 border-[#e21b5a]" />
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full border border-[#e21b5a]" />
                 )}
               </div>
               <span className={cn(
-                "text-[9px] font-black uppercase tracking-[0.1em] transition-colors duration-300",
+                "text-[8px] font-black uppercase tracking-[0.1em] transition-colors duration-300",
                 isActive ? "text-white" : "text-white/50 group-hover:text-white/80"
               )}>
                 {item.label}
