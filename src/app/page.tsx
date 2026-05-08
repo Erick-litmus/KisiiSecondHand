@@ -12,20 +12,29 @@ export default async function Home() {
   const session = await getSession();
   const userId = session?.user?.id;
 
-  const products = await prisma.product.findMany({
-    where: { status: "APPROVED" },
-    include: {
-      category: true,
-      seller: true,
-      ...(userId ? {
-        savedBy: {
-          where: { userId }
-        }
-      } : {})
-    },
-    take: 8,
-    orderBy: { createdAt: "desc" },
-  });
+  let products: any[] = [];
+  let dbError = false;
+
+  try {
+    products = await prisma.product.findMany({
+      where: { status: "APPROVED" },
+      include: {
+        category: true,
+        seller: true,
+        ...(userId ? {
+          savedBy: {
+            where: { userId }
+          }
+        } : {})
+      },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (err) {
+    console.error("Home page DB error:", err);
+    dbError = true;
+  }
+
 
   return (
     <div className="flex flex-col gap-8 pb-32 bg-slate-50 min-h-screen">
