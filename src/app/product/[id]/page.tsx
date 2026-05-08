@@ -19,6 +19,7 @@ import Image from "next/image";
 import ContactSellerButton from "@/components/ContactSellerButton";
 import ReportProductButton from "@/components/ReportProductButton";
 import MakeOfferButton from "@/components/MakeOfferButton";
+import ProductGallery from "@/components/ProductGallery";
 
 async function getProduct(id: string) {
   const product = await prisma.product.findUnique({
@@ -42,9 +43,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  // Fallback image if not provided
-  const imageUrl = product.image || "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?q=80&w=1000&auto=format&fit=crop";
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32 bg-white dark:bg-[#0a0a0a] min-h-screen transition-colors duration-300">
       {/* Breadcrumbs */}
@@ -55,30 +53,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Images Column */}
-        <div className="space-y-6">
-          <div className="aspect-square rounded-[40px] overflow-hidden bg-slate-100 relative group border border-slate-200 shadow-sm">
-             <Image 
-               src={imageUrl} 
-               alt={product.title} 
-               fill
-               className="object-cover transition-transform duration-700 group-hover:scale-105"
-             />
-             <button className="absolute top-8 right-8 p-3 bg-white/80 backdrop-blur-md rounded-full text-slate-800 hover:text-rose-500 transition-colors border border-slate-200/50 shadow-sm">
-               <Heart className="w-6 h-6" />
-             </button>
-          </div>
+        <ProductGallery 
+          images={[product.image || "", product.image2 || ""]} 
+          title={product.title} 
+        />
 
-          {product.image2 && (
-            <div className="aspect-square rounded-[40px] overflow-hidden bg-slate-100 relative group border border-slate-200 shadow-sm">
-               <Image 
-                 src={product.image2} 
-                 alt={`${product.title} - Alternate View`} 
-                 fill
-                 className="object-cover transition-transform duration-700 group-hover:scale-105"
-               />
-            </div>
-          )}
-        </div>
 
         {/* Info Column */}
         <div className="flex flex-col">
