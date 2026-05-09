@@ -4,11 +4,14 @@ import { login as setAuthSession } from "@/lib/auth";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const cleanAppUrl = APP_URL.endsWith("/") ? APP_URL.slice(0, -1) : APP_URL;
-const REDIRECT_URI = `${cleanAppUrl}/api/auth/google/callback`;
-
 export async function GET(request: NextRequest) {
+  const host = request.headers.get("host");
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const dynamicAppUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || dynamicAppUrl;
+  const cleanAppUrl = APP_URL.endsWith("/") ? APP_URL.slice(0, -1) : APP_URL;
+  const REDIRECT_URI = `${cleanAppUrl}/api/auth/google/callback`;
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state"); // callback URL encoded in state

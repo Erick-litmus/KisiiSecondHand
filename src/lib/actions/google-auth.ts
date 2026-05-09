@@ -1,8 +1,16 @@
 "use server";
 
+import { headers } from "next/headers";
+
 export async function getGoogleAuthUrl(callbackPath: string = "/") {
   const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const dynamicAppUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
+  
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || dynamicAppUrl;
 
   if (!GOOGLE_CLIENT_ID) {
     return { error: "Google login is not configured. Please contact support." };
