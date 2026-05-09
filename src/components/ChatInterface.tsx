@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { sendMessage } from "@/lib/actions/chat";
+import { sendMessage, markMessagesAsRead } from "@/lib/actions/chat";
 import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -108,6 +108,8 @@ export default function ChatInterface({
           
           if (newMessage.senderId !== currentUser.id) {
              newMessage.sender = { name: otherUser.name };
+             // Mark this new message as read since the user is actively viewing the chat
+             markMessagesAsRead(conversationId).catch(console.error);
           } else {
              newMessage.sender = { name: currentUser.name };
           }
@@ -116,6 +118,21 @@ export default function ChatInterface({
             if (prev.some((m: any) => m.id === newMessage.id)) return prev;
             return [...prev, newMessage];
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Message',
+          filter: `conversationId=eq.${conversationId}`
+        },
+        (payload) => {
+          const updatedMessage = payload.new;
+          setMessages((prev: any) => 
+            prev.map((m: any) => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m)
+          );
         }
       )
       .subscribe(async (status) => {

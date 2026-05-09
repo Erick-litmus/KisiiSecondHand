@@ -1,7 +1,7 @@
 import React from "react";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getMessages } from "@/lib/actions/chat";
+import { getMessages, markMessagesAsRead } from "@/lib/actions/chat";
 import ChatInterface from "@/components/ChatInterface";
 import { notFound, redirect } from "next/navigation";
 
@@ -37,9 +37,15 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const data = await getMessages(id);
   const otherUser = isBuyer ? conversation.seller : conversation.buyer;
 
+  // Mark unread messages sent to us as read
+  if (!isAdmin) {
+    await markMessagesAsRead(id);
+  }
+
   return (
     <div className="h-dvh bg-[#0a0a0a]">
       <ChatInterface 
+        key={id}
         conversationId={id}
         initialMessages={data.messages || []}
         currentUser={session.user}
