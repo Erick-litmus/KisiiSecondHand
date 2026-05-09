@@ -19,6 +19,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
 
   const users = await prisma.user.findMany({
     where: {
+      isVerified: true,
       OR: [
         { name: { contains: q, mode: "insensitive" } },
         { email: { contains: q, mode: "insensitive" } },

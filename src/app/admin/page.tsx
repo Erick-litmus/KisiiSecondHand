@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
     });
 
     const totalProducts = await prisma.product.count();
-    const totalUsers = await prisma.user.count();
+    const totalUsers = await prisma.user.count({ where: { isVerified: true } });
     const totalConversations = await prisma.conversation.count();
 
     const stats = [
