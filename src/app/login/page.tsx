@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { login } from "@/lib/actions/auth";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,6 +15,18 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callback = searchParams.get("callback") || "/";
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      if (errorParam === "google_cancelled") setError("Google login was cancelled.");
+      else if (errorParam === "google_token_failed") setError("Failed to authenticate with Google. Please try again.");
+      else if (errorParam === "google_profile_failed") setError("Failed to retrieve your Google profile.");
+      else if (errorParam === "google_no_email") setError("Your Google account must have an email address.");
+      else if (errorParam === "google_server_error") setError("Server error during Google login. (Make sure Database URLs are set in Vercel!)");
+      else setError("An unknown error occurred during login.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
