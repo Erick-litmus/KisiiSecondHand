@@ -95,50 +95,34 @@ export default function ChatInterface({
         
         setOtherUserTyping(isTyping);
       })
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'Message',
-          filter: `conversationId=eq.${conversationId}`
-        },
-        (payload) => {
-          const newMessage = payload.new;
-          
-          if (newMessage.senderId !== currentUser.id) {
-             newMessage.sender = { name: otherUser.name };
-             // Mark this new message as read since the user is actively viewing the chat
-             markMessagesAsRead(conversationId).catch(console.error);
-          } else {
-             newMessage.sender = { name: currentUser.name };
-          }
-          
-          setMessages((prev: any) => {
-            if (prev.some((m: any) => m.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
-          });
+      .on('broadcast', { event: 'NEW_MESSAGE' }, (payload) => {
+        const newMessage = payload.payload;
+        
+        if (newMessage.senderId !== currentUser.id) {
+           // Mark this new message as read since the user is actively viewing the chat
+           markMessagesAsRead(conversationId).catch(console.error);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'Message',
-          filter: `conversationId=eq.${conversationId}`
-        },
-        (payload) => {
-          const updatedMessage = payload.new;
+        
+        setMessages((prev: any) => {
+          if (prev.some((m: any) => m.id === newMessage.id)) return prev;
+          return [...prev, newMessage];
+        });
+      })
+      .on('broadcast', { event: 'MESSAGES_READ' }, (payload) => {
+        const { readerId } = payload.payload;
+        if (readerId !== currentUser.id) {
+          // The other user read our messages, update UI
           setMessages((prev: any) => 
-            prev.map((m: any) => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m)
+            prev.map((m: any) => 
+              m.senderId === currentUser.id && !m.isRead ? { ...m, isRead: true } : m
+            )
           );
         }
-      )
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           // Announce ourselves as online and not typing
-          await channel.track({ typing: false });
+          await channel.track({ online: true, typing: false });
         }
       });
 
@@ -151,12 +135,12 @@ export default function ChatInterface({
     setInputText(e.target.value);
     
     if (channelRef.current) {
-      channelRef.current.track({ typing: true });
+      channelRef.current.track({ online: true, typing: true });
       
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       
       typingTimeoutRef.current = setTimeout(() => {
-        if (channelRef.current) channelRef.current.track({ typing: false });
+        if (channelRef.current) channelRef.current.track({ online: true, typing: false });
       }, 2000);
     }
   };
@@ -166,7 +150,7 @@ export default function ChatInterface({
     if (!inputText.trim() || isSending) return;
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    if (channelRef.current) channelRef.current.track({ typing: false });
+    if (channelRef.current) channelRef.current.track({ online: true, typing: false });
 
     setIsSending(true);
     const text = inputText;

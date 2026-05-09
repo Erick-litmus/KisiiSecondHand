@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
+import { supabase } from "@/lib/supabase";
 
 export async function updateLastActive() {
   const session = await getSession();
@@ -24,7 +25,7 @@ export async function markMessagesAsRead(conversationId: string) {
   if (!session) return;
 
   try {
-    await prisma.message.updateMany({
+    const result = await prisma.message.updateMany({
       where: {
         conversationId,
         senderId: { not: session.user.id },
@@ -32,6 +33,18 @@ export async function markMessagesAsRead(conversationId: string) {
       },
       data: { isRead: true },
     });
+
+    if (result.count > 0) {
+      try {
+        await supabase.channel(`chat-${conversationId}`).send({
+          type: 'broadcast',
+          event: 'MESSAGES_READ',
+          payload: { readerId: session.user.id },
+        });
+      } catch (e) {
+        console.error("Broadcast read status failed", e);
+      }
+    }
   } catch (err) {
     console.error("Failed to mark messages as read:", err);
   }
@@ -190,7 +203,20 @@ export async function sendMessage(conversationId: string, text: string) {
       // Don't fail the message sending if email fails
     }
 
-    return { success: true, message: { ...message, sender: { name: session.user.name } } };
+    const resultMessage = { ...message, sender: { name: session.user.name } };
+
+    // Broadcast the new message
+    try {
+      await supabase.channel(`chat-${conversationId}`).send({
+        type: 'broadcast',
+        event: 'NEW_MESSAGE',
+        payload: resultMessage,
+      });
+    } catch (e) {
+      console.error("Broadcast failed", e);
+    }
+
+    return { success: true, message: resultMessage };
   } catch (err) {
     console.error("Failed to send message:", err);
     return { error: "Failed to send message" };
