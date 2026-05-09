@@ -6,6 +6,7 @@ import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import ReportUserButton from "./ReportUserButton";
+import { supabaseBrowserClient } from "@/lib/supabase-client";
 
 interface ChatInterfaceProps {
   conversationId: string;
@@ -30,7 +31,10 @@ export default function ChatInterface({
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const [lastActiveDate, setLastActiveDate] = useState<string | null>(initialLastActive || null);
   const [isMounted, setIsMounted] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Handle hydration
   useEffect(() => {
@@ -53,41 +57,99 @@ export default function ChatInterface({
     }
   }, [initialLastActive]);
 
-  // Simple polling for new messages (every 5 seconds)
+  // Realtime subscription & Presence
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/messages/${conversationId}`, { cache: "no-store" });
-        if (response.ok) {
-          const data = await response.json();
-          if (data && Array.isArray(data.messages)) {
-            // Only update if we have new messages or status changed
-            setMessages(prev => {
-              // Simple check: if lengths are different or status might have changed
-              if (prev.length !== data.messages.length) return data.messages;
-              return prev;
-            });
-            
-            // Check if other user is online (active in last 30 seconds)
-            if (data.otherUserLastActive) {
-              setLastActiveDate(data.otherUserLastActive);
-              const lastActive = new Date(data.otherUserLastActive).getTime();
-              const now = new Date().getTime();
-              setOtherUserOnline(now - lastActive < 30000);
-            }
+    // 1. Set up Supabase Realtime Channel with Presence
+    const channel = supabaseBrowserClient.channel(`chat-${conversationId}`, {
+      config: {
+        presence: {
+          key: currentUser.id,
+        },
+      },
+    });
+    
+    channelRef.current = channel;
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        let isOnline = false;
+        let isTyping = false;
+        
+        // Ensure state[otherUser.id] exists and is an array before checking typing
+        const otherUserPresence = state[otherUser.id] as any[];
+        if (otherUserPresence && otherUserPresence.length > 0) {
+          isOnline = true;
+          if (otherUserPresence.some((p: any) => p.typing)) {
+            isTyping = true;
           }
         }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-    }, 5000);
+        
+        // Update last active if they just went offline
+        setOtherUserOnline((prevOnline) => {
+          if (prevOnline && !isOnline) {
+            setLastActiveDate(new Date().toISOString());
+          }
+          return isOnline;
+        });
+        
+        setOtherUserTyping(isTyping);
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'Message',
+          filter: `conversationId=eq.${conversationId}`
+        },
+        (payload) => {
+          const newMessage = payload.new;
+          
+          if (newMessage.senderId !== currentUser.id) {
+             newMessage.sender = { name: otherUser.name };
+          } else {
+             newMessage.sender = { name: currentUser.name };
+          }
+          
+          setMessages((prev: any) => {
+            if (prev.some((m: any) => m.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+        }
+      )
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Announce ourselves as online and not typing
+          await channel.track({ typing: false });
+        }
+      });
 
-    return () => clearInterval(interval);
-  }, [conversationId]);
+    return () => {
+      supabaseBrowserClient.removeChannel(channel);
+    };
+  }, [conversationId, currentUser.id, currentUser.name, otherUser.id, otherUser.name]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value);
+    
+    if (channelRef.current) {
+      channelRef.current.track({ typing: true });
+      
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      
+      typingTimeoutRef.current = setTimeout(() => {
+        if (channelRef.current) channelRef.current.track({ typing: false });
+      }, 2000);
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || isSending) return;
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (channelRef.current) channelRef.current.track({ typing: false });
 
     setIsSending(true);
     const text = inputText;
@@ -124,7 +186,7 @@ export default function ChatInterface({
                 "text-[10px] font-black uppercase tracking-widest transition-colors",
                 otherUserOnline ? "text-emerald-500" : "text-slate-400"
               )}>
-                {otherUserOnline ? "Online" : (isMounted && lastActiveDate) ? `Last seen ${formatRelativeTime(lastActiveDate)}` : "Offline"}
+                {otherUserTyping ? "Typing..." : otherUserOnline ? "Online" : (isMounted && lastActiveDate) ? `Last seen ${formatRelativeTime(lastActiveDate)}` : "Offline"}
               </p>
             </div>
           </div>
@@ -201,7 +263,7 @@ export default function ChatInterface({
             inputMode="text"
             enterKeyHint="send"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={handleTextChange}
             placeholder="Type a message..."
             className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
           />
