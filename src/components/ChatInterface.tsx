@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { sendMessage, markMessagesAsRead, updateLastActive } from "@/lib/actions/chat";
+import { sendMessage, markMessagesAsRead, updateLastActive, getMessages } from "@/lib/actions/chat";
 import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -42,6 +42,30 @@ export default function ChatInterface({
     // Update last active when user opens the chat
     updateLastActive().catch(console.error);
     
+    // Polling fallback: Sync messages every 10 seconds in case Realtime misses something
+    const pollInterval = setInterval(async () => {
+      try {
+        const data = await getMessages(conversationId);
+        if (data && data.messages) {
+          setMessages(prev => {
+            // Only add messages we don't have yet
+            const newMessages = data.messages.filter(
+              (m: any) => !prev.some((p: any) => p.id === m.id)
+            );
+            if (newMessages.length === 0) return prev;
+            return [...prev, ...newMessages].sort((a, b) => 
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+          });
+          if (data.otherUserLastActive) {
+            setLastActiveDate(data.otherUserLastActive.toISOString());
+          }
+        }
+      } catch (err) {
+        console.error("Polling sync failed:", err);
+      }
+    }, 10000);
+    
     // Periodic status update while on the page
     const statusInterval = setInterval(() => {
       updateLastActive().catch(console.error);
@@ -53,6 +77,7 @@ export default function ChatInterface({
     }, 60000); // Every minute
     
     return () => {
+      clearInterval(pollInterval);
       clearInterval(statusInterval);
       clearInterval(tickInterval);
     };
@@ -102,7 +127,8 @@ export default function ChatInterface({
         let isOnline = false;
         let isTyping = false;
         
-        // Ensure state[otherUser.id] exists and is an array before checking typing
+        // Ensure state[otherUser?.id] exists and is an array before checking typing
+        if (!otherUser?.id) return;
         const otherUserPresence = state[otherUser.id] as any[];
         if (otherUserPresence && otherUserPresence.length > 0) {
           isOnline = true;
@@ -129,11 +155,13 @@ export default function ChatInterface({
            markMessagesAsRead(conversationId).catch(console.error);
            
            // Tell the sender we read their message
-           channel.send({
-             type: 'broadcast',
-             event: 'MESSAGES_READ',
-             payload: { readerId: currentUser.id }
-           });
+           if (channel) {
+             channel.send({
+               type: 'broadcast',
+               event: 'MESSAGES_READ',
+               payload: { readerId: currentUser.id }
+             });
+           }
         } else {
            // Ignore our own broadcasted messages since we handle them optimistically
            return;
