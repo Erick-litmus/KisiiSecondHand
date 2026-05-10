@@ -18,6 +18,23 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Kisii Market | Buy & Sell Secondhand Items at Kisii Campus",
   description: "The ultimate student marketplace for Kisii University. Buy and sell textbooks, electronics, furniture, and more.",
+  manifest: "/manifest.ts",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kisii Market",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#10b981",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import MainContainer from "@/components/MainContainer";
@@ -29,9 +46,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-      </head>
       <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900 w-full min-h-screen overflow-x-hidden`}>
         <Navbar />
         <MainContainer>
