@@ -13,6 +13,6 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     fetch: (...args) => fetch(...args),
   },
   realtime: typeof window === 'undefined' ? {
-    transport: ws,
+    transport: ws as any,
   } : undefined
 });
