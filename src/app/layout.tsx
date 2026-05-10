@@ -38,6 +38,7 @@ export const viewport = {
 
 import MainContainer from "@/components/MainContainer";
 import SWRegistration from "@/components/SWRegistration";
+import { PWAProvider } from "@/context/PWAContext";
 
 export default function RootLayout({
   children,
@@ -47,13 +48,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900 w-full min-h-screen overflow-x-hidden`}>
-        <SWRegistration />
-        <Navbar />
-        <MainContainer>
-          {children}
-        </MainContainer>
-        <BottomNav />
-        <Footer />
+        <PWAProvider>
+          <SWRegistration />
+          <Navbar />
+          <MainContainer>
+            {children}
+          </MainContainer>
+          <BottomNav />
+          <Footer />
+        </PWAProvider>
       </body>
     </html>
   );

@@ -22,6 +22,8 @@ import {
   Heart
 } from "lucide-react";
 import { clearSession } from "@/lib/actions/auth";
+import { usePWA } from "@/context/PWAContext";
+import { Download } from "lucide-react";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,6 +35,7 @@ const Navbar = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { canInstall, installApp, isInstalled } = usePWA();
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -115,6 +118,15 @@ const Navbar = () => {
           <nav className="flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-2 py-1.5 mr-4">
             <Link href="/" className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 px-4 py-2 transition-all rounded-lg hover:bg-white">Home</Link>
             <Link href="/browse" className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 px-4 py-2 transition-all rounded-lg hover:bg-white">Browse</Link>
+            {canInstall && !isInstalled && (
+              <button 
+                onClick={installApp}
+                className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-600 hover:text-amber-700 px-4 py-2 transition-all rounded-lg hover:bg-amber-50"
+              >
+                <Download className="w-3 h-3" />
+                Install App
+              </button>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -405,6 +417,18 @@ const Navbar = () => {
             )}
             {session?.user.role === "ADMIN" && (
               <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-emerald-600 p-4 hover:bg-slate-50 rounded-2xl transition-all uppercase tracking-widest">Admin Dashboard</Link>
+            )}
+            {canInstall && !isInstalled && (
+              <button 
+                onClick={() => {
+                  installApp();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 text-xs font-bold text-amber-600 p-4 hover:bg-amber-50 rounded-2xl transition-all uppercase tracking-widest"
+              >
+                <Download className="w-5 h-5" />
+                Install App Now
+              </button>
             )}
           </div>
 
