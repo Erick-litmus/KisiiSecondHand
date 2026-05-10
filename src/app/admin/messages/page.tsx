@@ -1,19 +1,11 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import Link from "next/link";
 import { MessageSquare, ShieldAlert, Clock, User, ArrowRight, ShieldCheck } from "lucide-react";
-import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMessagesPage() {
-  const session = await getSession();
-  
-  if (!session || session.user.role !== "ADMIN") {
-    redirect("/login");
-  }
-
   const conversations = await prisma.conversation.findMany({
     include: {
       product: true,
