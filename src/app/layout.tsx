@@ -18,7 +18,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Kisii Market | Buy & Sell Secondhand Items at Kisii Campus",
   description: "The ultimate student marketplace for Kisii University. Buy and sell textbooks, electronics, furniture, and more.",
-  manifest: "/manifest.ts",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -38,6 +37,7 @@ export const viewport = {
 };
 
 import MainContainer from "@/components/MainContainer";
+import SWRegistration from "@/components/SWRegistration";
 
 export default function RootLayout({
   children,
@@ -47,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} ${inter.variable} font-sans antialiased bg-slate-50 text-slate-900 w-full min-h-screen overflow-x-hidden`}>
+        <SWRegistration />
         <Navbar />
         <MainContainer>
           {children}
