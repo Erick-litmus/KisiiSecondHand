@@ -41,7 +41,11 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
-      console.error("❌ Google token exchange failed:", errText);
+      console.error("❌ Google token exchange failed!");
+      console.error("Status:", tokenRes.status);
+      console.error("Error Detail:", errText);
+      console.error("Redirect URI used:", REDIRECT_URI);
+      console.error("Client ID exists:", !!GOOGLE_CLIENT_ID);
       return NextResponse.redirect(`${APP_URL}/login?error=google_token_failed`);
     }
 
