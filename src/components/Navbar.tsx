@@ -366,10 +366,13 @@ const Navbar = () => {
             </div>
           )}
           <button
-            className="p-2 text-slate-400 hover:text-white transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shadow-sm ${isMobileMenuOpen 
+                ? "bg-rose-500 text-white rotate-90" 
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
           >
-            {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
