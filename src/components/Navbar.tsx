@@ -414,9 +414,9 @@ const Navbar = () => {
             <Link 
               href="/" 
               onClick={() => setIsMobileMenuOpen(false)} 
-              className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all group"
+              className="flex items-center gap-4 p-5 bg-emerald-500 rounded-[24px] text-white hover:bg-emerald-600 transition-all shadow-md active:scale-95"
             >
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-emerald-500 group-hover:text-white transition-all">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                 <Home className="w-5 h-5" />
               </div>
               <span className="text-xs font-black uppercase tracking-widest">Home</span>
@@ -425,9 +425,9 @@ const Navbar = () => {
             <Link 
               href="/browse" 
               onClick={() => setIsMobileMenuOpen(false)} 
-              className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-amber-50 hover:border-amber-100 hover:text-amber-600 transition-all group"
+              className="flex items-center gap-4 p-5 bg-amber-500 rounded-[24px] text-white hover:bg-amber-600 transition-all shadow-md active:scale-95"
             >
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                 <LayoutGrid className="w-5 h-5" />
               </div>
               <span className="text-xs font-black uppercase tracking-widest">Browse Market</span>
@@ -437,9 +437,9 @@ const Navbar = () => {
               <Link 
                 href="/saved" 
                 onClick={() => setIsMobileMenuOpen(false)} 
-                className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-600 transition-all group"
+                className="flex items-center gap-4 p-5 bg-rose-500 rounded-[24px] text-white hover:bg-rose-600 transition-all shadow-md active:scale-95"
               >
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-rose-500 group-hover:text-white transition-all">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                   <Heart className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest">Saved Items</span>
@@ -450,9 +450,9 @@ const Navbar = () => {
               <Link 
                 href="/admin" 
                 onClick={() => setIsMobileMenuOpen(false)} 
-                className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
+                className="flex items-center gap-4 p-5 bg-indigo-600 rounded-[24px] text-white hover:bg-indigo-700 transition-all shadow-md active:scale-95"
               >
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest">Admin Dashboard</span>
