@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
   const host = request.headers.get("host");
   const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
   const dynamicAppUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || dynamicAppUrl;
+  // Use the dynamic host to ensure consistency with the first step of OAuth
+  const APP_URL = dynamicAppUrl;
   const cleanAppUrl = APP_URL.endsWith("/") ? APP_URL.slice(0, -1) : APP_URL;
   const REDIRECT_URI = `${cleanAppUrl}/api/auth/google/callback`;
 

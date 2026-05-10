@@ -246,6 +246,7 @@ export async function getConversations() {
         },
       },
       orderBy: { updatedAt: "desc" },
+      take: 50, // Limit to recent 50 conversations for performance
     });
   } catch (err) {
     console.error("Error fetching conversations:", err);
@@ -278,8 +279,12 @@ export async function getMessages(conversationId: string) {
       include: {
         sender: { select: { name: true } },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: 100, // Fetch the 100 most recent messages
     });
+
+    // Reverse to show in chronological order
+    const chronMessages = messages.reverse();
 
     // Get other user's last active if conversation exists
     let otherUserLastActive = null;
@@ -300,7 +305,7 @@ export async function getMessages(conversationId: string) {
     }
 
     return {
-      messages,
+      messages: chronMessages,
       otherUserLastActive,
     };
   } catch (err) {
