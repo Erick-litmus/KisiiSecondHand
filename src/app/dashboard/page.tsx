@@ -73,8 +73,8 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
       <div className="flex flex-col md:flex-row items-start justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-5xl font-black mb-3 tracking-tight text-slate-900">Seller <span className="text-emerald-600">Dashboard</span></h1>
-          <p className="text-lg text-slate-500 font-medium italic">Welcome back, {(session.user.name || "User").split(' ')[0]}! Manage your campus listings here.</p>
+          <h1 className="text-3xl font-black mb-3 tracking-tight text-slate-900">Seller <span className="text-emerald-600">Dashboard</span></h1>
+          <p className="text-sm text-slate-500 font-medium">Welcome back, {(session.user.name || "User").split(' ')[0]}! Manage your campus listings here.</p>
         </div>
         <Link href="/sell" className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-xs flex items-center gap-3 transition-all shadow-xl shadow-emerald-600/20 hover:-translate-y-1">
           <Plus className="w-5 h-5" />
