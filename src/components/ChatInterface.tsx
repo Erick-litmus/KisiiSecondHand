@@ -127,6 +127,13 @@ export default function ChatInterface({
         if (newMessage.senderId !== currentUser.id) {
            // Mark this new message as read since the user is actively viewing the chat
            markMessagesAsRead(conversationId).catch(console.error);
+           
+           // Tell the sender we read their message
+           channel.send({
+             type: 'broadcast',
+             event: 'MESSAGES_READ',
+             payload: { readerId: currentUser.id }
+           });
         } else {
            // Ignore our own broadcasted messages since we handle them optimistically
            return;
@@ -152,6 +159,13 @@ export default function ChatInterface({
         if (status === 'SUBSCRIBED') {
           // Announce ourselves as online and not typing
           await channel.track({ online: true, typing: false });
+          
+          // Let the other person know we read their messages if they are currently online
+          await channel.send({
+            type: 'broadcast',
+            event: 'MESSAGES_READ',
+            payload: { readerId: currentUser.id }
+          });
         }
       });
 
@@ -201,6 +215,15 @@ export default function ChatInterface({
     const result = await sendMessage(conversationId, text);
     if (result.success) {
       setMessages((prev: any) => prev.map((m: any) => m.id === optimisticId ? result.message : m));
+      
+      // Broadcast the new message to the receiver in real time
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'NEW_MESSAGE',
+          payload: result.message,
+        });
+      }
     } else {
       alert("Failed to send message");
       setMessages((prev: any) => prev.filter((m: any) => m.id !== optimisticId));

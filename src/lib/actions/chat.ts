@@ -35,15 +35,7 @@ export async function markMessagesAsRead(conversationId: string) {
     });
 
     if (result.count > 0) {
-      try {
-        await supabase.channel(`chat-${conversationId}`).send({
-          type: 'broadcast',
-          event: 'MESSAGES_READ',
-          payload: { readerId: session.user.id },
-        });
-      } catch (e) {
-        console.error("Broadcast read status failed", e);
-      }
+      // Broadcast removed from server, handled by client instead
     }
   } catch (err) {
     console.error("Failed to mark messages as read:", err);
@@ -117,16 +109,7 @@ export async function sendMessage(conversationId: string, text: string) {
 
     const resultMessage = { ...message, sender: { name: session.user.name } };
 
-    // Broadcast the new message IMMEDIATELY so receiver gets it instantly
-    try {
-      await supabase.channel(`chat-${conversationId}`).send({
-        type: 'broadcast',
-        event: 'NEW_MESSAGE',
-        payload: resultMessage,
-      });
-    } catch (e) {
-      console.error("Broadcast failed", e);
-    }
+    // Broadcast removed from server, handled by client instead
 
     // Send email notification to recipient
     try {
