@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { sendMessage, markMessagesAsRead } from "@/lib/actions/chat";
+import { sendMessage, markMessagesAsRead, updateLastActive } from "@/lib/actions/chat";
 import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -39,6 +39,8 @@ export default function ChatInterface({
   // Handle hydration
   useEffect(() => {
     setIsMounted(true);
+    // Update last active when user opens the chat
+    updateLastActive().catch(console.error);
   }, []);
 
   // Auto scroll to bottom
@@ -101,6 +103,9 @@ export default function ChatInterface({
         if (newMessage.senderId !== currentUser.id) {
            // Mark this new message as read since the user is actively viewing the chat
            markMessagesAsRead(conversationId).catch(console.error);
+        } else {
+           // Ignore our own broadcasted messages since we handle them optimistically
+           return;
         }
         
         setMessages((prev: any) => {
@@ -156,11 +161,25 @@ export default function ChatInterface({
     const text = inputText;
     setInputText("");
 
+    // Optimistic Update
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      text,
+      senderId: currentUser.id,
+      conversationId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
+    
+    setMessages((prev: any) => [...prev, optimisticMsg]);
+
     const result = await sendMessage(conversationId, text);
     if (result.success) {
-      setMessages(prev => [...prev, result.message]);
+      setMessages((prev: any) => prev.map((m: any) => m.id === optimisticId ? result.message : m));
     } else {
       alert("Failed to send message");
+      setMessages((prev: any) => prev.filter((m: any) => m.id !== optimisticId));
       setInputText(text); // Restore text on failure
     }
     setIsSending(false);

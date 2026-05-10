@@ -100,13 +100,32 @@ export async function sendMessage(conversationId: string, text: string) {
       },
     });
 
-    // Update conversation updatedAt timestamp
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
-    });
+    // Update conversation updatedAt timestamp AND sender lastActive
+    await Promise.all([
+      prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      }),
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: { lastActive: new Date() },
+      })
+    ]);
 
     revalidatePath(`/messages/${conversationId}`);
+
+    const resultMessage = { ...message, sender: { name: session.user.name } };
+
+    // Broadcast the new message IMMEDIATELY so receiver gets it instantly
+    try {
+      await supabase.channel(`chat-${conversationId}`).send({
+        type: 'broadcast',
+        event: 'NEW_MESSAGE',
+        payload: resultMessage,
+      });
+    } catch (e) {
+      console.error("Broadcast failed", e);
+    }
 
     // Send email notification to recipient
     try {
@@ -201,19 +220,6 @@ export async function sendMessage(conversationId: string, text: string) {
     } catch (emailErr) {
       console.error("Failed to send notification email:", emailErr);
       // Don't fail the message sending if email fails
-    }
-
-    const resultMessage = { ...message, sender: { name: session.user.name } };
-
-    // Broadcast the new message
-    try {
-      await supabase.channel(`chat-${conversationId}`).send({
-        type: 'broadcast',
-        event: 'NEW_MESSAGE',
-        payload: resultMessage,
-      });
-    } catch (e) {
-      console.error("Broadcast failed", e);
     }
 
     return { success: true, message: resultMessage };
