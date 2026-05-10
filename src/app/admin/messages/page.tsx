@@ -5,13 +5,13 @@ import Link from "next/link";
 import { MessageSquare, ShieldAlert, Clock, User, ArrowRight, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMessagesPage() {
   const session = await getSession();
   
-  // Note: Support legacy admin login if needed, but here we enforce modern session for monitor
   if (!session || session.user.role !== "ADMIN") {
-    // If they have legacy admin session, they can't see this yet, 
-    // they should login with the admin user account.
+    redirect("/login");
   }
 
   const conversations = await prisma.conversation.findMany({

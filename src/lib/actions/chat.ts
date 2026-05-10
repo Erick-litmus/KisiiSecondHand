@@ -112,6 +112,7 @@ export async function sendMessage(conversationId: string, text: string) {
       })
     ]);
 
+    revalidatePath("/messages");
     revalidatePath(`/messages/${conversationId}`);
 
     const resultMessage = { ...message, sender: { name: session.user.name } };
@@ -237,8 +238,8 @@ export async function getConversations() {
       },
       include: {
         product: true,
-        buyer: { select: { name: true, email: true } },
-        seller: { select: { name: true, email: true } },
+        buyer: { select: { id: true, name: true, email: true, avatar: true } },
+        seller: { select: { id: true, name: true, email: true, avatar: true } },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,

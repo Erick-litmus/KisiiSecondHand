@@ -1,4 +1,5 @@
 import React from "react";
+export const dynamic = "force-dynamic";
 import { getConversations } from "@/lib/actions/chat";
 import { getSession } from "@/lib/auth";
 import Link from "next/link";
@@ -40,10 +41,12 @@ export default async function MessagesPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {conversations.map((conv) => {
-            const isBuyer = conv.buyerId === session.user.id;
-            const otherUser = isBuyer ? conv.seller : conv.buyer;
-            const lastMessage = conv.messages[0];
+            {conversations.map((conv) => {
+              if (!conv.product) return null;
+              
+              const isBuyer = conv.buyerId === session.user.id;
+              const otherUser = (isBuyer ? conv.seller : conv.buyer) || { name: "User" };
+              const lastMessage = conv.messages[0];
 
             return (
               <Link 
