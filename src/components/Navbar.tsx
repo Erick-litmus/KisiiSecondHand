@@ -410,39 +410,39 @@ const Navbar = () => {
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Link 
               href="/" 
               onClick={() => setIsMobileMenuOpen(false)} 
-              className="flex items-center gap-4 p-5 bg-emerald-500 rounded-[24px] text-white hover:bg-emerald-600 transition-all shadow-md active:scale-95"
+              className="flex items-center gap-3 p-3 bg-emerald-500 rounded-[20px] text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95"
             >
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Home className="w-5 h-5" />
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <Home className="w-4 h-4" />
               </div>
-              <span className="text-xs font-black uppercase tracking-widest">Home</span>
+              <span className="text-[10px] font-black uppercase tracking-tight">Home</span>
             </Link>
             
             <Link 
               href="/browse" 
               onClick={() => setIsMobileMenuOpen(false)} 
-              className="flex items-center gap-4 p-5 bg-amber-500 rounded-[24px] text-white hover:bg-amber-600 transition-all shadow-md active:scale-95"
+              className="flex items-center gap-3 p-3 bg-amber-500 rounded-[20px] text-white hover:bg-amber-600 transition-all shadow-sm active:scale-95"
             >
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <LayoutGrid className="w-5 h-5" />
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <LayoutGrid className="w-4 h-4" />
               </div>
-              <span className="text-xs font-black uppercase tracking-widest">Browse Market</span>
+              <span className="text-[10px] font-black uppercase tracking-tight">Browse</span>
             </Link>
 
             {session && (
               <Link 
                 href="/saved" 
                 onClick={() => setIsMobileMenuOpen(false)} 
-                className="flex items-center gap-4 p-5 bg-rose-500 rounded-[24px] text-white hover:bg-rose-600 transition-all shadow-md active:scale-95"
+                className="flex items-center gap-3 p-3 bg-rose-500 rounded-[20px] text-white hover:bg-rose-600 transition-all shadow-sm active:scale-95"
               >
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Heart className="w-5 h-5" />
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                  <Heart className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest">Saved Items</span>
+                <span className="text-[10px] font-black uppercase tracking-tight">Saved</span>
               </Link>
             )}
 
@@ -450,12 +450,12 @@ const Navbar = () => {
               <Link 
                 href="/admin" 
                 onClick={() => setIsMobileMenuOpen(false)} 
-                className="flex items-center gap-4 p-5 bg-indigo-600 rounded-[24px] text-white hover:bg-indigo-700 transition-all shadow-md active:scale-95"
+                className="flex items-center gap-3 p-3 bg-indigo-600 rounded-[20px] text-white hover:bg-indigo-700 transition-all shadow-sm active:scale-95"
               >
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest">Admin Dashboard</span>
+                <span className="text-[10px] font-black uppercase tracking-tight">Admin</span>
               </Link>
             )}
           </div>
