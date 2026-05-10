@@ -6,38 +6,42 @@ interface PWAContextType {
   canInstall: boolean;
   installApp: () => Promise<void>;
   isInstalled: boolean;
+  showInstructions: boolean;
+  setShowInstructions: (show: boolean) => void;
 }
 
 const PWAContext = createContext<PWAContextType>({
   canInstall: false,
   installApp: async () => {},
   isInstalled: false,
+  showInstructions: false,
+  setShowInstructions: () => {},
 });
 
 export const usePWA = () => useContext(PWAContext);
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
     // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+    if (isStandalone) {
       setIsInstalled(true);
     }
 
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setCanInstall(true);
+      console.log("PWA Install Prompt Ready");
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
     window.addEventListener("appinstalled", () => {
       setIsInstalled(true);
-      setCanInstall(false);
       setDeferredPrompt(null);
     });
 
@@ -47,19 +51,23 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const installApp = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === "accepted") {
-      setCanInstall(false);
-      setDeferredPrompt(null);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Fallback: Show instructions for iOS or browsers that don't support beforeinstallprompt
+      setShowInstructions(true);
     }
   };
 
+  // canInstall is now always true if not already installed, so the button is permanent
+  const canInstall = !isInstalled;
+
   return (
-    <PWAContext.Provider value={{ canInstall, installApp, isInstalled }}>
+    <PWAContext.Provider value={{ canInstall, installApp, isInstalled, showInstructions, setShowInstructions }}>
       {children}
     </PWAContext.Provider>
   );

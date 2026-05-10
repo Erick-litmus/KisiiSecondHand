@@ -4,7 +4,6 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-import InstallPrompt from "./InstallPrompt";
 
 export default function MainContainer({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,7 +15,6 @@ export default function MainContainer({ children }: { children: React.ReactNode 
       isChatPage ? "pt-0" : "pt-20"
     )}>
       {children}
-      <InstallPrompt />
     </main>
   );
 }

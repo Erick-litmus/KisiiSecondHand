@@ -39,6 +39,7 @@ export const viewport = {
 import MainContainer from "@/components/MainContainer";
 import SWRegistration from "@/components/SWRegistration";
 import { PWAProvider } from "@/context/PWAContext";
+import PWAInstructions from "@/components/PWAInstructions";
 
 export default function RootLayout({
   children,
@@ -54,6 +55,7 @@ export default function RootLayout({
           <MainContainer>
             {children}
           </MainContainer>
+          <PWAInstructions />
           <BottomNav />
           <Footer />
         </PWAProvider>
