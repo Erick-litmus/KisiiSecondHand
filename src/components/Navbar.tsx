@@ -418,21 +418,21 @@ const Navbar = () => {
             {session?.user.role === "ADMIN" && (
               <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-emerald-600 p-4 hover:bg-slate-50 rounded-2xl transition-all uppercase tracking-widest">Admin Dashboard</Link>
             )}
+          </div>
+
+          <div className="mt-6 pt-6 flex flex-col gap-4 border-t border-slate-100">
             {canInstall && !isInstalled && (
               <button 
                 onClick={() => {
                   installApp();
                   setIsMobileMenuOpen(false);
                 }}
-                className="flex items-center justify-center gap-3 text-xs font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 p-4 rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-rose-500/20 active:scale-95"
+                className="flex items-center justify-center gap-3 text-xs font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 p-4 rounded-2xl transition-all uppercase tracking-widest shadow-lg shadow-rose-500/20 active:scale-95 mb-2"
               >
                 <Download className="w-5 h-5" />
                 Install App Now
               </button>
             )}
-          </div>
-
-          <div className="mt-auto pt-8 flex flex-col gap-4">
             {session ? (
               <button
                 onClick={handleLogout}
