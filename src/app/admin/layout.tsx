@@ -13,26 +13,30 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const adminSession = cookieStore.get("admin_session");
+  const adminSessionCookie = cookieStore.get("admin_session")?.value;
   const session = await getSession();
   
-  const isAuthorized = adminSession || (session && session.user.role === "ADMIN");
+  let isAdminAuthenticated = false;
+  if (adminSessionCookie) {
+    try {
+      const { decrypt } = await import("@/lib/auth");
+      const decoded = await decrypt(adminSessionCookie);
+      if (decoded && (decoded.admin || decoded.user?.role === "ADMIN")) {
+        isAdminAuthenticated = true;
+      }
+    } catch (e) {}
+  }
+
+  const isAuthorized = isAdminAuthenticated || (session && session.user.role === "ADMIN");
   
   // Get current pathname from middleware header
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || ""; 
   const isLoginPage = pathname === "/admin/login";
 
-  // If on login page or not authorized (middleware should catch unauthorized, 
-  // but we keep this for rendering safety), show children without layout
-  if (isLoginPage || !isAuthorized) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white font-sans antialiased">
-        <div className="w-full">
-          {children}
-        </div>
-      </div>
-    );
+  if (!isAuthorized && !isLoginPage) {
+    const { redirect } = await import("next/navigation");
+    redirect("/admin/login");
   }
 
   return (

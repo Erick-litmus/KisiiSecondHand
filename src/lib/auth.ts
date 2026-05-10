@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const secretKey = "kisii_marketplace_secret_key_123456789"; // In real app, use process.env.JWT_SECRET
+const secretKey = process.env.JWT_SECRET || "kisii_marketplace_secret_key_fallback_do_not_use_in_prod";
 const key = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: any) {

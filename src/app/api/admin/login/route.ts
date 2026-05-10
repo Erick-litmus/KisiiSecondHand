@@ -7,9 +7,11 @@ export async function POST(request: NextRequest) {
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (password === adminPassword) {
-      // Set a simple cookie (valid for 24 hours)
+      const { encrypt } = await import("@/lib/auth");
+      const sessionValue = await encrypt({ admin: true, expires: new Date(Date.now() + 60 * 60 * 24 * 1000) });
+      
       const cookieStore = await cookies();
-      cookieStore.set("admin_session", "true", {
+      cookieStore.set("admin_session", sessionValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
