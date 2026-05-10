@@ -19,7 +19,8 @@ import {
   Star,
   LayoutGrid,
   MessageSquare,
-  Heart
+  Heart,
+  Home
 } from "lucide-react";
 import { clearSession } from "@/lib/actions/auth";
 import { usePWA } from "@/context/PWAContext";
@@ -409,14 +410,53 @@ const Navbar = () => {
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-slate-600 p-4 hover:bg-slate-50 hover:text-emerald-600 rounded-2xl transition-all uppercase tracking-widest">Home</Link>
-            <Link href="/browse" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-slate-600 p-4 hover:bg-slate-50 hover:text-emerald-600 rounded-2xl transition-all uppercase tracking-widest">Browse Market</Link>
+          <div className="flex flex-col gap-3">
+            <Link 
+              href="/" 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all group"
+            >
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                <Home className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest">Home</span>
+            </Link>
+            
+            <Link 
+              href="/browse" 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-amber-50 hover:border-amber-100 hover:text-amber-600 transition-all group"
+            >
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <LayoutGrid className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest">Browse Market</span>
+            </Link>
+
             {session && (
-              <Link href="/saved" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-rose-500 p-4 hover:bg-rose-50/50 rounded-2xl transition-all uppercase tracking-widest">Saved Items</Link>
+              <Link 
+                href="/saved" 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-600 transition-all group"
+              >
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-rose-500 group-hover:text-white transition-all">
+                  <Heart className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest">Saved Items</span>
+              </Link>
             )}
+
             {session?.user.role === "ADMIN" && (
-              <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-bold text-emerald-600 p-4 hover:bg-slate-50 rounded-2xl transition-all uppercase tracking-widest">Admin Dashboard</Link>
+              <Link 
+                href="/admin" 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-600 transition-all group"
+              >
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest">Admin Dashboard</span>
+              </Link>
             )}
           </div>
 
