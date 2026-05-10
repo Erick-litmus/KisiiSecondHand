@@ -8,6 +8,7 @@ export async function getGoogleAuthUrl(callbackPath: string = "/") {
   const headersList = await headers();
   const host = headersList.get("host");
   const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const dynamicAppUrl = host ? `${protocol}://${host}` : "http://localhost:3000";
   // Prioritize the dynamic host to ensure the redirect_uri always matches the current environment
   const APP_URL = dynamicAppUrl;
 
