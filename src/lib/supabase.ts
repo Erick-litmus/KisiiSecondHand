@@ -12,9 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   global: {
     fetch: (...args) => fetch(...args),
   },
-  // Use ws for real-time support in Node 20
-  realtime: {
-    // @ts-ignore
+  realtime: typeof window === 'undefined' ? {
     transport: ws,
-  }
+  } : undefined
 });
