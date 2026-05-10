@@ -41,7 +41,31 @@ export default function ChatInterface({
     setIsMounted(true);
     // Update last active when user opens the chat
     updateLastActive().catch(console.error);
+    
+    // Periodic status update while on the page
+    const statusInterval = setInterval(() => {
+      updateLastActive().catch(console.error);
+    }, 120000); // Every 2 minutes
+    
+    // Periodic re-render to update "Last seen Xm ago"
+    const tickInterval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000); // Every minute
+    
+    return () => {
+      clearInterval(statusInterval);
+      clearInterval(tickInterval);
+    };
   }, []);
+
+  const [, setTick] = useState(0);
+
+  // Sync last active from props when they change
+  useEffect(() => {
+    if (initialLastActive) {
+      setLastActiveDate(initialLastActive);
+    }
+  }, [initialLastActive]);
 
   // Auto scroll to bottom
   useEffect(() => {

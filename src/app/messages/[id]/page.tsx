@@ -1,4 +1,5 @@
 import React from "react";
+export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getMessages, markMessagesAsRead } from "@/lib/actions/chat";

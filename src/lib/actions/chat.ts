@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/mail";
 import { supabase } from "@/lib/supabase";
 
 export async function updateLastActive() {
@@ -153,13 +153,8 @@ export async function sendMessage(conversationId: string, text: string) {
           },
         });
 
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
+        // The transporter is now imported from @/lib/mail
+
 
         await transporter.sendMail({
           from: `"Kisii Market Notifications" <${process.env.SMTP_USER}>`,
