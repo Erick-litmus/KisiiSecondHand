@@ -55,7 +55,13 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
         currentUser={session.user}
         otherUser={safeOtherUser}
         product={conversation.product}
-        initialLastActive={data?.otherUserLastActive ? data.otherUserLastActive.toISOString() : null}
+        initialLastActive={(() => {
+          if (!data?.otherUserLastActive) return null;
+          // Server Actions JSON-serialize Date objects to strings, so we must
+          // wrap in new Date() before calling .toISOString() to avoid a crash.
+          const d = new Date(data.otherUserLastActive as any);
+          return isNaN(d.getTime()) ? null : d.toISOString();
+        })()}
       />
     </div>
   );
