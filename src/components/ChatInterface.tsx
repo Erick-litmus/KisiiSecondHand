@@ -369,7 +369,7 @@ export default function ChatInterface({
       {/* Messages Area */}
       <div 
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar whatsapp-bg relative scroll-smooth"
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 whatsapp-bg relative scroll-smooth"
       >
         {Array.isArray(messages) && messages.map((msg, i) => {
           if (!msg) return null;
@@ -431,7 +431,7 @@ export default function ChatInterface({
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col min-w-[60px]">
                   {isEditing ? (
                     <div className="flex flex-col gap-2 min-w-[200px]">
                       <textarea
@@ -450,10 +450,10 @@ export default function ChatInterface({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[14px] leading-relaxed pr-2 pb-4">{msg.text}</p>
+                    <p className="text-[14.5px] leading-relaxed mb-1 pr-1">{msg.text}</p>
                   )}
-                  <div className="absolute bottom-1 right-2 flex items-center gap-1 opacity-70">
-                    <span className="text-[9px] font-bold tracking-tight">
+                  <div className="flex items-center justify-end gap-1 opacity-60 mt-0.5 self-end">
+                    <span className="text-[10px] font-bold">
                       {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                     </span>
                     {isMe && (
