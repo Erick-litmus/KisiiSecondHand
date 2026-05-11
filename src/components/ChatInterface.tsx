@@ -275,18 +275,19 @@ export default function ChatInterface({
     
     setMessages((prev: any) => [...prev, optimisticMsg]);
 
+    // Broadcast the new message to the receiver in real time INSTANTLY
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'NEW_MESSAGE',
+        payload: optimisticMsg,
+      });
+    }
+
     const result = await sendMessage(conversationId, text);
     if (result.success) {
+      // Update the optimistic message with the real one from DB
       setMessages((prev: any) => prev.map((m: any) => m.id === optimisticId ? result.message : m));
-      
-      // Broadcast the new message to the receiver in real time
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'NEW_MESSAGE',
-          payload: result.message,
-        });
-      }
     } else {
       alert("Failed to send message");
       setMessages((prev: any) => prev.filter((m: any) => m.id !== optimisticId));
@@ -449,10 +450,10 @@ export default function ChatInterface({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[13.5px] leading-relaxed pr-8">{msg.text}</p>
+                    <p className="text-[14px] leading-relaxed pr-2 pb-4">{msg.text}</p>
                   )}
-                  <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
-                    <span className="text-[10px] text-white/50 font-medium">
+                  <div className="absolute bottom-1 right-2 flex items-center gap-1 opacity-70">
+                    <span className="text-[9px] font-bold tracking-tight">
                       {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                     </span>
                     {isMe && (

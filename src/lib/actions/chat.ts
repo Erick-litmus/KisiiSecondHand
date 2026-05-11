@@ -266,7 +266,7 @@ export async function getMessages(conversationId: string) {
         sender: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 100, // Fetch the 100 most recent messages
+      take: 500, // Fetch the 500 most recent messages
     });
 
     // Reverse to show in chronological order
