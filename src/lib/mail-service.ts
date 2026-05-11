@@ -1,11 +1,17 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 /**
  * Unified Mail Service for Kisii Market
  * Handles: Verification OTP, Password Resets, Chat Notifications, and Contact Messages.
+ * Uses Resend for production deliverability, falls back to Gmail SMTP.
  */
 
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
 const getTransporter = () => {
+  if (resend) return null; // Use Resend instead
+
   const smtpUser = (process.env.SMTP_USER || "").trim();
   const smtpPass = (process.env.SMTP_PASS || "").replace(/\s/g, '');
 
@@ -23,6 +29,8 @@ const getTransporter = () => {
   });
 };
 
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"; // Default Resend test email
+const FROM_NAME = "Kisii Market";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const BRAND_COLOR = "#10b981"; // Emerald 500
 
@@ -59,13 +67,6 @@ export const MailService = {
    * Send a 6-digit verification code
    */
   sendVerificationEmail: async (email: string, code: string) => {
-    const transporter = getTransporter();
-    
-    if (!transporter) {
-      console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${code} 🔑\n\n`);
-      return { success: true, message: "Logged to console" };
-    }
-
     const html = htmlWrapper(`
       <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 16px; font-size: 22px; font-weight: 800; text-align: center;">Welcome to the Marketplace!</h2>
       <p style="color: #64748b; font-size: 16px; line-height: 24px; margin-bottom: 32px; text-align: center;">
@@ -77,13 +78,36 @@ export const MailService = {
       </div>
       
       <p style="color: #94a3b8; font-size: 14px; margin-bottom: 0; text-align: center;">
-        To ensure you receive our emails in your inbox, please add <b>kisiimarket1@gmail.com</b> to your contacts.
+        If you didn't request this code, you can safely ignore this email.
       </p>
     `, "Identity Verification");
 
+    // Try Resend first if configured
+    if (resend) {
+      try {
+        await resend.emails.send({
+          from: `${FROM_NAME} <${FROM_EMAIL}>`,
+          to: email,
+          subject: `Your Verification Code: ${code}`,
+          html,
+        });
+        return { success: true };
+      } catch (err: any) {
+        console.error("❌ Resend Error:", err);
+        // Fallback will happen below
+      }
+    }
+
+    // Fallback to Gmail SMTP
+    const transporter = getTransporter();
+    if (!transporter) {
+      console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${code} 🔑\n\n`);
+      return { success: true, message: "Logged to console" };
+    }
+
     try {
       await transporter.sendMail({
-        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+        from: `"${FROM_NAME}" <${process.env.SMTP_USER}>`,
         to: email,
         subject: `Your Verification Code: ${code}`,
         text: `Welcome to Kisii Market! Your verification code is: ${code}`,
@@ -95,7 +119,7 @@ export const MailService = {
       });
       return { success: true };
     } catch (error: any) {
-      console.error("❌ MailService Error (Verification):", error);
+      console.error("❌ MailService Error (Gmail Fallback):", error);
       console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${code} 🔑\n\n`);
       return { error: error.message };
     }
