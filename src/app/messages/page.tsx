@@ -42,11 +42,11 @@ export default async function MessagesPage() {
       ) : (
         <div className="grid gap-4">
             {conversations.map((conv) => {
-              if (!conv.product) return null;
+              if (!conv || !conv.product) return null;
               
               const isBuyer = conv.buyerId === session.user.id;
               const otherUser = (isBuyer ? conv.seller : conv.buyer) || { name: "User" };
-              const lastMessage = conv.messages[0];
+              const lastMessage = conv.messages && conv.messages[0];
 
             return (
               <Link 
@@ -58,15 +58,15 @@ export default async function MessagesPage() {
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
                   <img 
                     src={conv.product.image || "/images/placeholder.jpg"} 
-                    alt={conv.product.title}
+                    alt={conv.product.title || "Product"}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-slate-800 truncate pr-4">{otherUser.name || "User"}</h3>
-                    {lastMessage && (
+                    <h3 className="font-bold text-slate-800 truncate pr-4">{otherUser?.name || "User"}</h3>
+                    {lastMessage && lastMessage.createdAt && (
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {new Date(lastMessage.createdAt).toLocaleDateString()}
@@ -76,7 +76,7 @@ export default async function MessagesPage() {
                   
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md">
-                      {conv.product.title}
+                      {conv.product.title || "Unknown Product"}
                     </span>
                   </div>
 

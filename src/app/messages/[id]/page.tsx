@@ -38,6 +38,9 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const data = await getMessages(id);
   const otherUser = isBuyer ? conversation.seller : conversation.buyer;
 
+  // Fallback for cases where the other user might have been deleted
+  const safeOtherUser = otherUser || { id: "deleted", name: "Deleted User" };
+
   // Mark unread messages sent to us as read
   if (!isAdmin) {
     await markMessagesAsRead(id);
@@ -48,11 +51,11 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
       <ChatInterface 
         key={id}
         conversationId={id}
-        initialMessages={data.messages || []}
+        initialMessages={data?.messages || []}
         currentUser={session.user}
-        otherUser={otherUser}
+        otherUser={safeOtherUser}
         product={conversation.product}
-        initialLastActive={data.otherUserLastActive ? data.otherUserLastActive.toISOString() : null}
+        initialLastActive={data?.otherUserLastActive ? data.otherUserLastActive.toISOString() : null}
       />
     </div>
   );

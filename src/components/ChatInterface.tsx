@@ -46,19 +46,20 @@ export default function ChatInterface({
     const pollInterval = setInterval(async () => {
       try {
         const data = await getMessages(conversationId);
-        if (data && data.messages) {
+        if (data && Array.isArray(data.messages)) {
           setMessages(prev => {
+            const currentMessages = Array.isArray(prev) ? prev : [];
             // Only add messages we don't have yet
             const newMessages = data.messages.filter(
-              (m: any) => !prev.some((p: any) => p.id === m.id)
+              (m: any) => m && !currentMessages.some((p: any) => p && p.id === m.id)
             );
-            if (newMessages.length === 0) return prev;
-            return [...prev, ...newMessages].sort((a, b) => 
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            if (newMessages.length === 0) return currentMessages;
+            return [...currentMessages, ...newMessages].sort((a, b) => 
+              new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
             );
           });
           if (data.otherUserLastActive) {
-            setLastActiveDate(data.otherUserLastActive.toISOString());
+            setLastActiveDate(new Date(data.otherUserLastActive).toISOString());
           }
         }
       } catch (err) {
@@ -128,12 +129,13 @@ export default function ChatInterface({
         let isTyping = false;
         
         // Ensure state[otherUser?.id] exists and is an array before checking typing
-        if (!otherUser?.id) return;
-        const otherUserPresence = state[otherUser.id] as any[];
-        if (otherUserPresence && otherUserPresence.length > 0) {
-          isOnline = true;
-          if (otherUserPresence.some((p: any) => p.typing)) {
-            isTyping = true;
+        if (otherUser?.id) {
+          const otherUserPresence = state[otherUser.id] as any[];
+          if (Array.isArray(otherUserPresence) && otherUserPresence.length > 0) {
+            isOnline = true;
+            if (otherUserPresence.some((p: any) => p && p.typing)) {
+              isTyping = true;
+            }
           }
         }
         
@@ -148,9 +150,10 @@ export default function ChatInterface({
         setOtherUserTyping(isTyping);
       })
       .on('broadcast', { event: 'NEW_MESSAGE' }, (payload) => {
-        const newMessage = payload.payload;
+        const newMessage = payload?.payload;
+        if (!newMessage || !newMessage.id) return;
         
-        if (newMessage.senderId !== currentUser.id) {
+        if (newMessage.senderId !== currentUser?.id) {
            // Mark this new message as read since the user is actively viewing the chat
            markMessagesAsRead(conversationId).catch(console.error);
            
@@ -159,7 +162,7 @@ export default function ChatInterface({
              channel.send({
                type: 'broadcast',
                event: 'MESSAGES_READ',
-               payload: { readerId: currentUser.id }
+               payload: { readerId: currentUser?.id }
              });
            }
         } else {
@@ -168,18 +171,19 @@ export default function ChatInterface({
         }
         
         setMessages((prev: any) => {
-          if (prev.some((m: any) => m.id === newMessage.id)) return prev;
-          return [...prev, newMessage];
+          const currentMessages = Array.isArray(prev) ? prev : [];
+          if (currentMessages.some((m: any) => m && m.id === newMessage.id)) return currentMessages;
+          return [...currentMessages, newMessage];
         });
       })
       .on('broadcast', { event: 'MESSAGES_READ' }, (payload) => {
-        const { readerId } = payload.payload;
-        if (readerId !== currentUser.id) {
+        const readerId = payload?.payload?.readerId;
+        if (readerId && readerId !== currentUser?.id) {
           // The other user read our messages, update UI
           setMessages((prev: any) => 
-            prev.map((m: any) => 
-              m.senderId === currentUser.id && !m.isRead ? { ...m, isRead: true } : m
-            )
+            Array.isArray(prev) ? prev.map((m: any) => 
+              m && m.senderId === currentUser?.id && !m.isRead ? { ...m, isRead: true } : m
+            ) : []
           );
         }
       })
@@ -200,7 +204,7 @@ export default function ChatInterface({
     return () => {
       supabaseBrowserClient.removeChannel(channel);
     };
-  }, [conversationId, currentUser.id, currentUser.name, otherUser.id, otherUser.name]);
+  }, [conversationId, currentUser?.id, currentUser?.name, otherUser?.id, otherUser?.name]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -274,7 +278,7 @@ export default function ChatInterface({
             </div>
             <div>
               <h3 className="font-bold text-white leading-none mb-1 flex items-center gap-1">
-                {otherUser.name || "User"}
+                {otherUser?.name || "User"}
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               </h3>
               <p className={cn(
@@ -288,7 +292,9 @@ export default function ChatInterface({
         </div>
 
         <div className="flex items-center gap-3">
-          <ReportUserButton userId={otherUser.id} userName={otherUser.name || "Unknown User"} />
+          {otherUser?.id && (
+            <ReportUserButton userId={otherUser.id} userName={otherUser.name || "Unknown User"} />
+          )}
         </div>
       </div>
 
@@ -297,8 +303,9 @@ export default function ChatInterface({
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar whatsapp-bg relative"
       >
-        {messages.map((msg, i) => {
-          const isMe = msg.senderId === currentUser.id;
+        {Array.isArray(messages) && messages.map((msg, i) => {
+          if (!msg) return null;
+          const isMe = msg.senderId === currentUser?.id;
           
           return (
             <div key={msg.id || i} className={cn(
@@ -323,7 +330,7 @@ export default function ChatInterface({
                   <p className="text-[13.5px] leading-relaxed pr-16">{msg.text}</p>
                   <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
                     <span className="text-[10px] text-white/50 font-medium">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                     </span>
                     {isMe && (
                       <div className="flex -space-x-1">
