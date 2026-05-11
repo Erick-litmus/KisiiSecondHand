@@ -56,24 +56,33 @@ export default function ChatInterface({
     const pollInterval = setInterval(async () => {
       try {
         const data = await getMessages(conversationId);
-        if (data && Array.isArray(data.messages)) {
-          setMessages(prev => {
-            const currentMessages = Array.isArray(prev) ? prev : [];
-            // Only add messages we don't have yet
-            const newMessages = data.messages.filter(
-              (m: any) => m && !currentMessages.some((p: any) => p && p.id === m.id)
-            );
-            if (newMessages.length === 0) return currentMessages;
-            return [...currentMessages, ...newMessages].sort((a, b) => 
-              new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
-            );
+        // Defensive: ensure data and its messages array are valid before touching state
+        if (!data || typeof data !== "object") return;
+        if (!Array.isArray(data.messages)) return;
+
+        setMessages(prev => {
+          const currentMessages = Array.isArray(prev) ? prev : [];
+          // Only add messages we don't have yet (deduplicate by id)
+          const newMessages = data.messages.filter(
+            (m: any) => m && m.id && !currentMessages.some((p: any) => p && p.id === m.id)
+          );
+          if (newMessages.length === 0) return currentMessages;
+          return [...currentMessages, ...newMessages].sort((a, b) => {
+            const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return aTime - bTime;
           });
-          if (data.otherUserLastActive) {
-            setLastActiveDate(new Date(data.otherUserLastActive).toISOString());
+        });
+
+        if (data.otherUserLastActive) {
+          const parsed = new Date(data.otherUserLastActive);
+          if (!isNaN(parsed.getTime())) {
+            setLastActiveDate(parsed.toISOString());
           }
         }
       } catch (err) {
-        console.error("Polling sync failed:", err);
+        // Non-fatal: log but don't crash the component
+        console.error("[ChatInterface] Polling sync failed:", err);
       }
     }, 10000);
     
@@ -155,38 +164,40 @@ export default function ChatInterface({
   // Group messages by date
   const groupMessagesByDate = (msgs: any[]) => {
     const groups: { [key: string]: any[] } = {};
-    
+
     msgs.forEach(msg => {
-      if (!msg) return;
-      const date = new Date(msg.createdAt || Date.now());
-      const dateStr = date.toLocaleDateString([], { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      if (!msg || !msg.id) return; // Skip null/malformed messages
+      // Guard against invalid createdAt values that would produce an invalid date key
+      const rawDate = msg.createdAt ? new Date(msg.createdAt) : new Date();
+      const safeDate = isNaN(rawDate.getTime()) ? new Date() : rawDate;
+      const dateStr = safeDate.toLocaleDateString([], {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
-      
+
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
       groups[dateStr].push(msg);
     });
-    
+
     return Object.entries(groups).map(([date, messages]) => {
-      const today = new Date().toLocaleDateString([], { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const today = new Date().toLocaleDateString([], {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
-      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString([], { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString([], {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
-      
+
       let displayDate = date;
       if (date === today) displayDate = "Today";
       else if (date === yesterday) displayDate = "Yesterday";
-      
+
       return { date: displayDate, messages };
     });
   };
@@ -365,18 +376,24 @@ export default function ChatInterface({
       // Update the optimistic message with the real one from DB
       setMessages((prev: any) => prev.map((m: any) => m.id === optimisticId ? result.message : m));
     } else {
-      alert("Failed to send message");
+      console.error("[ChatInterface] Failed to send message:", result.error);
+      // Revert: remove optimistic message and restore input text
       setMessages((prev: any) => prev.filter((m: any) => m.id !== optimisticId));
-      setInputText(text); // Restore text on failure
+      setInputText(text); // Restore text so the user can retry
     }
     setIsSending(false);
   };
 
   const handleEdit = async (messageId: string) => {
     if (!editText.trim()) return;
+    // Optimistic update
+    const previousMessages = messages;
+    setMessages((prev: any) => prev.map((m: any) => m.id === messageId ? { ...m, text: editText } : m));
+    setEditingMessageId(null);
+    setEditText("");
+
     const result = await editMessage(messageId, editText);
     if (result.success) {
-      setMessages((prev: any) => prev.map((m: any) => m.id === messageId ? { ...m, text: editText } : m));
       if (channelRef.current) {
         channelRef.current.send({
           type: 'broadcast',
@@ -384,18 +401,21 @@ export default function ChatInterface({
           payload: { id: messageId, text: editText }
         });
       }
-      setEditingMessageId(null);
-      setEditText("");
     } else {
-      alert("Failed to edit message");
+      // Revert on failure
+      console.error("[ChatInterface] Failed to edit message:", result.error);
+      setMessages(previousMessages);
     }
   };
 
   const handleDelete = async (messageId: string) => {
     if (!confirm("Are you sure you want to delete this message?")) return;
+    // Optimistic delete
+    const previousMessages = messages;
+    setMessages((prev: any) => prev.filter((m: any) => m.id !== messageId));
+
     const result = await deleteMessage(messageId);
     if (result.success) {
-      setMessages((prev: any) => prev.filter((m: any) => m.id !== messageId));
       if (channelRef.current) {
         channelRef.current.send({
           type: 'broadcast',
@@ -404,7 +424,9 @@ export default function ChatInterface({
         });
       }
     } else {
-      alert("Failed to delete message");
+      // Revert on failure
+      console.error("[ChatInterface] Failed to delete message:", result.error);
+      setMessages(previousMessages);
     }
   };
 
