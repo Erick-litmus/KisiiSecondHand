@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 const secretKey = process.env.JWT_SECRET || "kisii_marketplace_secret_key_fallback_do_not_use_in_prod";
 const key = new TextEncoder().encode(secretKey);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Pass the pathname to components via headers (useful for layout logic)
