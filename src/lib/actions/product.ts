@@ -41,18 +41,10 @@ export async function createProduct(formData: {
       });
     }
 
-    // 2. Fetch user trust signals for risk-based approval
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { createdAt: true, isVerified: true, isPhoneVerified: true }
-    });
-
-    // An account is "Trusted" if it's older than 24 hours AND verified (Email or Phone)
-    const accountAgeHours = user ? (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60) : 0;
-    const isTrusted = accountAgeHours > 24 && (user?.isVerified || user?.isPhoneVerified);
-    const initialStatus = isTrusted ? "APPROVED" : "PENDING";
-
-    // 3. Create the product using session user
+    // 2. Create the product — always PENDING until an admin approves it.
+    // Removing auto-approval: it caused trusted users' products to bypass review
+    // and the revalidatePath("/") call was causing the browse page to refresh
+    // instantly and wipe visible listings for all users.
     const product = await prisma.product.create({
       data: {
         title: formData.title,
@@ -63,14 +55,15 @@ export async function createProduct(formData: {
         image2: formData.image2 || null,
         categoryId: category.id,
         sellerId: session.user.id,
-        status: initialStatus,
+        status: "PENDING", // Always requires admin approval
       },
     });
 
     console.log("Product created successfully:", product.id);
 
-    revalidatePath("/");
-    revalidatePath("/browse");
+    // Only revalidate the admin page so the new pending product appears there.
+    // Do NOT revalidate / or /browse here — those should only update after
+    // an admin approves or rejects (handled in lib/actions/admin.ts).
     revalidatePath("/admin");
 
     // Return only serializable data
