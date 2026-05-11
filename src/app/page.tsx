@@ -43,7 +43,7 @@ export default async function Home() {
         {/* Background image using img tag for reliability */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/kisii%20ict.jpg"
+          src="/images/kisii_campus.png"
           alt="Kisii University Campus"
           style={{
             position: "absolute",
