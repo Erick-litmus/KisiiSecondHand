@@ -1,17 +1,19 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { 
-  Users, 
-  Mail, 
-  Calendar, 
-  Shield, 
-  User, 
+import {
+  Users,
+  Mail,
+  Calendar,
+  Shield,
+  User,
   ArrowLeft,
   Search,
   Filter,
   MoreVertical
 } from "lucide-react";
 import AdminSearch from "@/components/AdminSearch";
+import UserBanButton from "@/components/admin/UserBanButton";
+
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const params = await searchParams;
@@ -28,8 +30,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     orderBy: { createdAt: "desc" },
     include: {
       items: { select: { id: true } },
-    }
+    },
+    // Fetch isBanned so the ban button can reflect current state
+    // (isBanned is a scalar field, automatically included in findMany)
   });
+
 
   return (
     <div className="space-y-12 bg-slate-50 min-h-screen p-8 rounded-[40px] border border-slate-200 shadow-inner">
@@ -75,8 +80,10 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 <th className="px-10 py-6">Access Level</th>
                 <th className="px-10 py-6 text-right">Joined</th>
                 <th className="px-10 py-6 text-right">Activity</th>
+                <th className="px-10 py-6 text-right">Actions</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-50">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-50/30 transition-all group">
@@ -132,6 +139,15 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Total Listings</span>
                     </div>
                   </td>
+                  <td className="px-10 py-8 text-right">
+                    {/* Don't allow banning other admins */}
+                    {user.role !== "ADMIN" ? (
+                      <UserBanButton userId={user.id} isBanned={user.isBanned} />
+                    ) : (
+                      <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">—</span>
+                    )}
+                  </td>
+
                 </tr>
               ))}
             </tbody>
