@@ -29,6 +29,14 @@ model User {
   otpCode    String?
   otpExpiresAt DateTime?
 
+  // Phone Verification
+  phone           String?   @unique
+  isPhoneVerified Boolean   @default(false)
+  
+  // Security Metadata
+  lastIp          String?
+  lastUserAgent   String?
+
   // Password Reset
   resetToken       String?
   resetTokenExpiry DateTime?
@@ -142,4 +150,12 @@ model Report {
   reason           String       // e.g. Scam, Harassment, Fake Listing, Inappropriate, Other
   status           String       @default("PENDING") // PENDING, REVIEWED, DISMISSED
   createdAt        DateTime     @default(now())
+}
+
+model Blacklist {
+  id        String   @id @default(cuid())
+  value     String   @unique // email, phone, IP, or userAgent fingerprint
+  type      String   // "EMAIL", "PHONE", "IP", "DEVICE"
+  reason    String?
+  createdAt DateTime @default(now())
 }

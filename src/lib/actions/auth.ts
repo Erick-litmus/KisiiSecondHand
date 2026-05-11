@@ -6,10 +6,25 @@ import { login as setAuthSession, logout as clearAuthSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MailService } from "@/lib/mail-service";
+import { headers } from "next/headers";
 
 // Helper to generate a 6-digit OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Helper to check blacklist
+async function checkBlacklist(email?: string, ip?: string, userAgent?: string) {
+  const identifiers = [email, ip].filter(Boolean) as string[];
+  if (identifiers.length === 0) return null;
+
+  const blacklisted = await prisma.blacklist.findFirst({
+    where: {
+      value: { in: identifiers }
+    }
+  });
+  
+  return blacklisted;
 }
 
 export async function register(formData: any) {
@@ -19,6 +34,17 @@ export async function register(formData: any) {
 
   if (!email || !password) {
     return { error: "Email and password are required" };
+  }
+
+  // Security checks
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for") || "unknown";
+  const userAgent = headersList.get("user-agent") || "unknown";
+
+  const blacklisted = await checkBlacklist(email, ip, userAgent);
+  if (blacklisted) {
+    console.warn(`Blocked registration attempt from blacklisted ${blacklisted.type}: ${blacklisted.value}`);
+    return { error: "Access denied. This account or connection has been flagged for security reasons." };
   }
 
   try {
@@ -76,6 +102,8 @@ export async function register(formData: any) {
         isVerified: false,
         otpCode,
         otpExpiresAt,
+        lastIp: ip,
+        lastUserAgent: userAgent,
       },
     });
 
@@ -107,6 +135,16 @@ export async function login(formData: any) {
 
   if (!email || !password) {
     return { error: "Email and password are required" };
+  }
+
+  // Security checks
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for") || "unknown";
+  const userAgent = headersList.get("user-agent") || "unknown";
+
+  const blacklisted = await checkBlacklist(email, ip, userAgent);
+  if (blacklisted) {
+    return { error: "Access denied. This account or connection has been flagged for security reasons." };
   }
 
   try {
@@ -142,6 +180,15 @@ export async function login(formData: any) {
       await MailService.sendVerificationEmail(email, otpCode);
       return { error: "Email not verified. A new verification code has been sent.", requiresVerification: true, email };
     }
+
+    // Update metadata
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastIp: ip,
+        lastUserAgent: userAgent,
+      }
+    });
 
     await setAuthSession({ id: user.id, email: user.email, name: user.name, role: user.role, avatar: user.avatar });
 

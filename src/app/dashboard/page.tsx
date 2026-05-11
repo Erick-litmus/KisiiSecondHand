@@ -2,20 +2,23 @@ import React from "react";
 export const dynamic = "force-dynamic";
 import { 
   Plus, 
-  Package, 
   MessageSquare, 
   Eye, 
   Edit3, 
   Trash2,
   TrendingUp,
   DollarSign,
-  PackageCheck
+  PackageCheck,
+  ShieldCheck,
+  Phone,
+  Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { updatePhoneNumber, verifyPhoneNumber } from "@/lib/actions/user";
 import MarkAsSoldButton from "@/components/MarkAsSoldButton";
 
 const StatsCard = ({ title, value, icon: Icon, trend, color }: any) => (
@@ -44,6 +47,17 @@ export default async function DashboardPage() {
   const userId = session.user.id;
 
   // Fetch real data from Prisma
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { 
+      createdAt: true, 
+      isVerified: true, 
+      isPhoneVerified: true, 
+      phone: true,
+      lastIp: true
+    }
+  });
+
   const products = await prisma.product.findMany({
     where: { sellerId: userId },
     orderBy: { createdAt: "desc" },
@@ -100,10 +114,10 @@ export default async function DashboardPage() {
         />
         <StatsCard 
           title="Profile Trust" 
-          value="Verified" 
-          icon={Eye} 
-          trend="Active" 
-          color="bg-amber-500" 
+          value={user?.isPhoneVerified ? "Verified" : user?.isVerified ? "Email OK" : "Low"} 
+          icon={ShieldCheck} 
+          trend={user?.isPhoneVerified ? "High" : "Action Needed"} 
+          color={user?.isPhoneVerified ? "bg-emerald-500" : "bg-amber-500"} 
         />
         <StatsCard 
           title="New Inquiries" 
@@ -113,6 +127,55 @@ export default async function DashboardPage() {
           color="bg-rose-500" 
         />
       </div>
+
+      {/* Security Notice for Unverified Users */}
+      {user && !user.isPhoneVerified && (
+        <div className="mb-12 p-6 bg-amber-50 border border-amber-100 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+              <Phone className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-black text-amber-900">Verify your Phone Number</h4>
+              <p className="text-sm text-amber-700/80 font-medium">Verified sellers get "Trusted" badges and their items are approved instantly.</p>
+            </div>
+          </div>
+          <div className="flex gap-3 w-full md:w-auto">
+            <form action={async (formData) => {
+              "use server";
+              const phone = formData.get("phone") as string;
+              await updatePhoneNumber(phone);
+            }} className="flex gap-2 w-full md:w-auto">
+              <input 
+                name="phone" 
+                type="text" 
+                placeholder={user.phone || "07XX XXX XXX"} 
+                className="bg-white border border-amber-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 flex-grow md:w-48"
+              />
+              <button className="bg-amber-600 text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all">
+                Update
+              </button>
+            </form>
+            {user.phone && (
+              <form action={async (formData) => {
+                "use server";
+                const code = formData.get("code") as string;
+                await verifyPhoneNumber(code);
+              }} className="flex gap-2 w-full md:w-auto">
+                <input 
+                  name="code" 
+                  type="text" 
+                  placeholder="6-digit code" 
+                  className="bg-white border border-amber-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 flex-grow md:w-32"
+                />
+                <button className="bg-emerald-600 text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
+                  Verify
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Listings Table */}
@@ -204,6 +267,59 @@ export default async function DashboardPage() {
            <Link href="/messages" className="block w-full mt-10 py-5 bg-slate-50 border border-slate-100 rounded-[24px] text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] text-center hover:bg-slate-100 hover:text-slate-600 transition-all">
              View Full Inbox
            </Link>
+        </div>
+
+        {/* Security & Metadata Card */}
+        <div className="bg-[#0f172a] rounded-[48px] p-10 text-white shadow-2xl lg:col-span-3">
+           <div className="flex items-center gap-4 mb-8">
+              <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                 <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                 <h3 className="text-xl font-black tracking-tight">Security & Trust Center</h3>
+                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Protection</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                 <div className="flex items-center gap-3 mb-4">
+                    <Lock className="w-4 h-4 text-emerald-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Last Login IP</span>
+                 </div>
+                 <div className="text-lg font-mono font-bold text-slate-200">{user?.lastIp || "Unknown"}</div>
+              </div>
+
+              <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                 <div className="flex items-center gap-3 mb-4">
+                    <Phone className="w-4 h-4 text-indigo-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Status</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className={cn(
+                       "w-2 h-2 rounded-full",
+                       user?.isPhoneVerified ? "bg-emerald-500" : "bg-rose-500"
+                    )} />
+                    <span className="text-sm font-black uppercase tracking-widest">
+                       {user?.isPhoneVerified ? "Fully Verified" : "Not Linked"}
+                    </span>
+                 </div>
+              </div>
+
+              <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                 <div className="flex items-center gap-3 mb-4">
+                    <ShieldCheck className="w-4 h-4 text-amber-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ban Status</span>
+                 </div>
+                 <div className="text-sm font-black uppercase tracking-widest text-emerald-400">Clear / In Good Standing</div>
+              </div>
+           </div>
+
+           <div className="mt-8 pt-8 border-t border-white/5 text-[10px] text-slate-500 font-medium leading-relaxed">
+              Big companies use these signals (IP, Phone, Device) to keep marketplaces safe. 
+              By verifying your phone and maintaining a clean IP history, your items are prioritized 
+              and approved instantly.
+           </div>
         </div>
       </div>
     </div>

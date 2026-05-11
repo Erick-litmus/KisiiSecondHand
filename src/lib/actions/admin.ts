@@ -99,12 +99,35 @@ export async function dismissReport(reportId: string) {
 
 export async function banUser(userId: string) {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, phone: true, lastIp: true }
+    });
+
+    if (user) {
+      // 1. Add identifiers to Blacklist to prevent ban evasion
+      const identifiers = [
+        { value: user.email, type: "EMAIL" },
+        ...(user.phone ? [{ value: user.phone, type: "PHONE" }] : []),
+        ...(user.lastIp ? [{ value: user.lastIp, type: "IP" }] : []),
+      ];
+
+      for (const iden of identifiers) {
+        await prisma.blacklist.upsert({
+          where: { value: iden.value },
+          update: {},
+          create: { value: iden.value, type: iden.type, reason: "Manual ban" }
+        });
+      }
+    }
+
+    // 2. Mark user as banned in the database
     await prisma.user.update({
       where: { id: userId },
       data: { isBanned: true },
     });
     
-    // Also resolve related reports
+    // 3. Resolve related reports
     await prisma.report.updateMany({
       where: { reportedUserId: userId, status: "PENDING" },
       data: { status: "REVIEWED" },
