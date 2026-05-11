@@ -159,6 +159,58 @@ export async function sendMessage(conversationId: string, text: string) {
   }
 }
 
+export async function editMessage(messageId: string, newText: string) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message || message.senderId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const updated = await prisma.message.update({
+      where: { id: messageId },
+      data: { 
+        text: newText,
+        // Optional: track if it was edited
+      },
+    });
+
+    return { success: true, message: updated };
+  } catch (err) {
+    console.error("Failed to edit message:", err);
+    return { error: "Failed to edit message" };
+  }
+}
+
+export async function deleteMessage(messageId: string) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message || message.senderId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to delete message:", err);
+    return { error: "Failed to delete message" };
+  }
+}
+
 export async function getConversations() {
   const session = await getSession();
   if (!session) return [];

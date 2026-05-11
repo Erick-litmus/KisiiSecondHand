@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { sendMessage, markMessagesAsRead, updateLastActive, getMessages } from "@/lib/actions/chat";
-import { Send, User, ChevronLeft, ShieldCheck } from "lucide-react";
+import { sendMessage, markMessagesAsRead, updateLastActive, getMessages, editMessage, deleteMessage } from "@/lib/actions/chat";
+import { Send, User, ChevronLeft, ShieldCheck, MoreVertical, Edit2, Trash2, X, Check } from "lucide-react";
 import Link from "next/link";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import ReportUserButton from "./ReportUserButton";
@@ -35,6 +35,11 @@ export default function ChatInterface({
   const scrollRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Edit/Delete State
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // Handle hydration
   useEffect(() => {
@@ -93,12 +98,24 @@ export default function ChatInterface({
     }
   }, [initialLastActive]);
 
+  const [isFirstScroll, setIsFirstScroll] = useState(true);
+
   // Auto scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (isFirstScroll) {
+        // Instant scroll on first load
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        setIsFirstScroll(false);
+      } else {
+        // Smooth scroll for new messages
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
     }
-  }, [messages]);
+  }, [messages, isFirstScroll]);
 
   // Initial online check
   useEffect(() => {
@@ -175,6 +192,20 @@ export default function ChatInterface({
           if (currentMessages.some((m: any) => m && m.id === newMessage.id)) return currentMessages;
           return [...currentMessages, newMessage];
         });
+      })
+      .on('broadcast', { event: 'MESSAGE_EDITED' }, (payload) => {
+        const edited = payload?.payload;
+        if (!edited || !edited.id) return;
+        setMessages((prev: any) => 
+          Array.isArray(prev) ? prev.map((m: any) => m && m.id === edited.id ? { ...m, text: edited.text } : m) : []
+        );
+      })
+      .on('broadcast', { event: 'MESSAGE_DELETED' }, (payload) => {
+        const deletedId = payload?.payload?.id;
+        if (!deletedId) return;
+        setMessages((prev: any) => 
+          Array.isArray(prev) ? prev.filter((m: any) => m && m.id !== deletedId) : []
+        );
       })
       .on('broadcast', { event: 'MESSAGES_READ' }, (payload) => {
         const readerId = payload?.payload?.readerId;
@@ -264,6 +295,42 @@ export default function ChatInterface({
     setIsSending(false);
   };
 
+  const handleEdit = async (messageId: string) => {
+    if (!editText.trim()) return;
+    const result = await editMessage(messageId, editText);
+    if (result.success) {
+      setMessages((prev: any) => prev.map((m: any) => m.id === messageId ? { ...m, text: editText } : m));
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'MESSAGE_EDITED',
+          payload: { id: messageId, text: editText }
+        });
+      }
+      setEditingMessageId(null);
+      setEditText("");
+    } else {
+      alert("Failed to edit message");
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    const result = await deleteMessage(messageId);
+    if (result.success) {
+      setMessages((prev: any) => prev.filter((m: any) => m.id !== messageId));
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'MESSAGE_DELETED',
+          payload: { id: messageId }
+        });
+      }
+    } else {
+      alert("Failed to delete message");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full mx-auto bg-[#0a0a0a] border-x border-white/5 overflow-hidden">
       {/* Chat Header */}
@@ -301,15 +368,17 @@ export default function ChatInterface({
       {/* Messages Area */}
       <div 
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar whatsapp-bg relative"
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 no-scrollbar whatsapp-bg relative scroll-smooth"
       >
         {Array.isArray(messages) && messages.map((msg, i) => {
           if (!msg) return null;
           const isMe = msg.senderId === currentUser?.id;
+          const isEditing = editingMessageId === msg.id;
+          const isMenuOpen = activeMenuId === msg.id;
           
           return (
             <div key={msg.id || i} className={cn(
-              "flex w-full mb-1",
+              "flex w-full mb-1 group",
               isMe ? "justify-end" : "justify-start"
             )}>
               <div className={cn(
@@ -326,8 +395,62 @@ export default function ChatInterface({
                     : "left-[-8px] border-r-[8px] border-r-[#202c33] border-b-[10px] border-b-transparent"
                 )} />
 
+                {isMe && (
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <button 
+                      onClick={() => setActiveMenuId(isMenuOpen ? null : (msg.id as string))}
+                      className="p-1 hover:bg-black/20 rounded-full text-white/50 hover:text-white"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    
+                    {isMenuOpen && (
+                      <div className="absolute right-0 top-full mt-1 bg-[#233138] border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px] z-20">
+                        <button 
+                          onClick={() => {
+                            setEditingMessageId(msg.id as string);
+                            setEditText(msg.text);
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-slate-200"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button 
+                          onClick={() => {
+                            handleDelete(msg.id as string);
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-red-400"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1">
-                  <p className="text-[13.5px] leading-relaxed pr-16">{msg.text}</p>
+                  {isEditing ? (
+                    <div className="flex flex-col gap-2 min-w-[200px]">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="bg-black/20 border border-white/10 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 min-h-[60px]"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => setEditingMessageId(null)} className="p-1 hover:bg-white/10 rounded text-white/50">
+                          <X className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleEdit(msg.id as string)} className="p-1 hover:bg-emerald-500/20 rounded text-emerald-500">
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[13.5px] leading-relaxed pr-8">{msg.text}</p>
+                  )}
                   <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
                     <span className="text-[10px] text-white/50 font-medium">
                       {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
