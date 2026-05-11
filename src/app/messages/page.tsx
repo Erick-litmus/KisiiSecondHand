@@ -80,7 +80,7 @@ export default async function MessagesPage() {
                     </span>
                   </div>
 
-                  <p className="text-sm text-slate-500 truncate italic">
+                  <p className="text-sm text-emerald-600/80 font-medium truncate">
                     {lastMessage ? lastMessage.text : "No messages yet..."}
                   </p>
                 </div>
