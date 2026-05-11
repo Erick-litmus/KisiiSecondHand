@@ -59,17 +59,22 @@ export default function ChatInterface({
         if (data && Array.isArray(data.messages)) {
           setMessages(prev => {
             const currentMessages = Array.isArray(prev) ? prev : [];
-            // Only add messages we don't have yet
+            // Only add messages we don't have yet (deduplicate by id)
             const newMessages = data.messages.filter(
-              (m: any) => m && !currentMessages.some((p: any) => p && p.id === m.id)
+              (m: any) => m && m.id && !currentMessages.some((p: any) => p && p.id === m.id)
             );
             if (newMessages.length === 0) return currentMessages;
-            return [...currentMessages, ...newMessages].sort((a, b) => 
+            const updated = [...currentMessages, ...newMessages];
+            // Always sort to keep conversation order consistent
+            return updated.sort((a, b) => 
               new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
             );
           });
           if (data.otherUserLastActive) {
-            setLastActiveDate(new Date(data.otherUserLastActive).toISOString());
+            const parsed = new Date(data.otherUserLastActive);
+            if (!isNaN(parsed.getTime())) {
+              setLastActiveDate(parsed.toISOString());
+            }
           }
         }
       } catch (err) {
@@ -363,7 +368,18 @@ export default function ChatInterface({
     const result = await sendMessage(conversationId, text);
     if (result.success) {
       // Update the optimistic message with the real one from DB
-      setMessages((prev: any) => prev.map((m: any) => m.id === optimisticId ? result.message : m));
+      setMessages((prev: any) => {
+        // Remove the optimistic message
+        const filtered = prev.filter((m: any) => m.id !== optimisticId);
+        // Check if the real message was already added by polling/broadcast
+        if (filtered.some((m: any) => m.id === result.message.id)) {
+          return filtered;
+        }
+        // Add the real message and sort
+        return [...filtered, result.message].sort((a, b) => 
+          new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+        );
+      });
     } else {
       alert("Failed to send message");
       setMessages((prev: any) => prev.filter((m: any) => m.id !== optimisticId));
