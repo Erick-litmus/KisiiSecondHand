@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { MailService } from "@/lib/mail-service";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
@@ -28,7 +28,7 @@ export async function requestPasswordReset(email: string) {
       },
     });
 
-    const emailResult = await sendPasswordResetEmail(email, resetToken);
+    const emailResult = await MailService.sendPasswordResetEmail(email, resetToken);
 
     if (emailResult.error) {
       return { error: "Failed to send reset email. Please try again later." };
