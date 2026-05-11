@@ -46,6 +46,10 @@ const htmlWrapper = (content: string, title: string) => `
     <div style="text-align: center; margin-top: 32px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
       <p>© ${new Date().getFullYear()} Kisii Secondhand Marketplace. All rights reserved.</p>
       <p style="margin-top: 8px;">Safe • Simple • Local</p>
+      <p style="margin-top: 16px; font-weight: 400; text-transform: none; color: #cbd5e1;">
+        Kisii University Main Campus, Kisii, Kenya<br/>
+        This is a transactional email sent to your registered account.
+      </p>
     </div>
   </div>
 `;
@@ -63,9 +67,9 @@ export const MailService = {
     }
 
     const html = htmlWrapper(`
-      <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 16px; font-size: 22px; font-weight: 800; text-align: center;">Verify Your Account</h2>
+      <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 16px; font-size: 22px; font-weight: 800; text-align: center;">Welcome to the Marketplace!</h2>
       <p style="color: #64748b; font-size: 16px; line-height: 24px; margin-bottom: 32px; text-align: center;">
-        Welcome to Kisii Market! Use the code below to verify your email address. This code will expire in 15 minutes.
+        Your security is our priority. Please use the verification code below to confirm your identity and secure your Kisii Market account.
       </p>
       
       <div style="background-color: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 32px;">
@@ -73,17 +77,21 @@ export const MailService = {
       </div>
       
       <p style="color: #94a3b8; font-size: 14px; margin-bottom: 0; text-align: center;">
-        If you didn't request this code, you can safely ignore this email.
+        To ensure you receive our emails in your inbox, please add <b>kisiimarket1@gmail.com</b> to your contacts.
       </p>
-    `, "Security Verification");
+    `, "Identity Verification");
 
     try {
       await transporter.sendMail({
         from: `"Kisii Market" <${process.env.SMTP_USER}>`,
         to: email,
-        subject: `${code} is your verification code`,
-        text: `Your Kisii Market verification code is: ${code}`,
+        subject: `Your Verification Code: ${code}`,
+        text: `Welcome to Kisii Market! Your verification code is: ${code}`,
         html,
+        headers: {
+          'X-Entity-Ref-ID': Date.now().toString(),
+          'X-Priority': '1 (Highest)',
+        }
       });
       return { success: true };
     } catch (error: any) {
