@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { login as setAuthSession, logout as clearAuthSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sendVerificationEmail } from "@/lib/email";
+import { MailService } from "@/lib/mail-service";
 
 // Helper to generate a 6-digit OTP
 function generateOTP() {
@@ -52,7 +52,7 @@ export async function register(formData: any) {
       // FALLBACK: Always log the OTP to the terminal so the user can verify even if email fails
       console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
 
-      const emailResult = await sendVerificationEmail(email, otpCode);
+      const emailResult = await MailService.sendVerificationEmail(email, otpCode);
       if (emailResult.error) {
         console.error("Failed to send verification email:", emailResult.error);
         return { success: true, email, emailWarning: "Account updated but email failed. Check your VS Code terminal for the code." };
@@ -85,7 +85,7 @@ export async function register(formData: any) {
     console.log(`\n\n🔑 [VERIFICATION CODE FOR ${email}]: ${otpCode} 🔑\n\n`);
     
     // Send verification email
-    const emailResult = await sendVerificationEmail(email, otpCode);
+    const emailResult = await MailService.sendVerificationEmail(email, otpCode);
     if (emailResult.error) {
       console.error("Failed to send verification email:", emailResult.error);
       // Still return success so the user knows account was created,
@@ -139,7 +139,7 @@ export async function login(formData: any) {
         data: { otpCode, otpExpiresAt }
       });
       
-      await sendVerificationEmail(email, otpCode);
+      await MailService.sendVerificationEmail(email, otpCode);
       return { error: "Email not verified. A new verification code has been sent.", requiresVerification: true, email };
     }
 
