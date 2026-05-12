@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export default function MainContainer({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").filter(Boolean).length === 2;
 
   return (
     <main className={cn(

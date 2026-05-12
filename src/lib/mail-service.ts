@@ -197,6 +197,100 @@ export const MailService = {
   },
 
   /**
+   * Send notification for product approval/rejection
+   */
+  sendProductStatusEmail: async (toEmail: string, productName: string, status: "APPROVED" | "REJECTED", reason?: string) => {
+    const transporter = getTransporter();
+    if (!transporter) return { success: true };
+
+    const isApproved = status === "APPROVED";
+    const title = isApproved ? "Listing Approved" : "Listing Update";
+    const dashboardLink = `${BASE_URL}/dashboard`;
+
+    const html = htmlWrapper(`
+      <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 16px; font-size: 22px; font-weight: 800; text-align: center;">
+        ${isApproved ? "Great news!" : "Update on your listing"}
+      </h2>
+      <p style="color: #64748b; font-size: 16px; line-height: 24px; margin-bottom: 24px; text-align: center;">
+        Your product <strong style="color: #0f172a;">"${productName}"</strong> has been <span style="color: ${isApproved ? BRAND_COLOR : "#ef4444"}; font-weight: 800;">${status.toLowerCase()}</span> by our moderation team.
+      </p>
+      
+      ${!isApproved && reason ? `
+        <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 20px; margin-bottom: 32px;">
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.1em;">Reason for rejection</p>
+          <p style="margin: 0; font-size: 15px; color: #991b1b; font-weight: 600;">${reason}</p>
+        </div>
+      ` : `
+        <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 20px; margin-bottom: 32px; text-align: center;">
+          <p style="margin: 0; font-size: 15px; color: #166534; font-weight: 600;">Your item is now live and visible to all students!</p>
+        </div>
+      `}
+      
+      <div style="text-align: center;">
+        <a href="${dashboardLink}" style="display: inline-block; background-color: ${BRAND_COLOR}; color: white; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Go to Dashboard</a>
+      </div>
+    `, title);
+
+    try {
+      await transporter.sendMail({
+        from: `"Kisii Market" <${process.env.SMTP_USER}>`,
+        to: toEmail,
+        subject: `${isApproved ? "✅ Approved" : "❌ Rejected"}: ${productName}`,
+        html,
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error("❌ MailService Error (Product Status):", error);
+      return { error: error.message };
+    }
+  },
+
+  /**
+   * Notify admin of a new product submission
+   */
+  sendAdminNewProductNotification: async (productName: string, sellerName: string, productId: string) => {
+    const transporter = getTransporter();
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+    if (!transporter || !adminEmail) return { success: true };
+
+    const adminLink = `${BASE_URL}/admin`;
+    const html = htmlWrapper(`
+      <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 16px; font-size: 22px; font-weight: 800;">New Listing for Review</h2>
+      <p style="color: #64748b; font-size: 16px; line-height: 24px; margin-bottom: 24px;">
+        A new product has been submitted and is waiting for your approval.
+      </p>
+      
+      <div style="background-color: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #f1f5f9; margin-bottom: 32px;">
+        <div style="margin-bottom: 16px;">
+          <p style="margin: 0; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Product</p>
+          <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: 800; color: #0f172a;">${productName}</p>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Seller</p>
+          <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: 700; color: #334155;">${sellerName}</p>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="${adminLink}" style="display: inline-block; background-color: #0f172a; color: white; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Review in Admin Panel</a>
+      </div>
+    `, "Moderation Alert");
+
+    try {
+      await transporter.sendMail({
+        from: `"System Alert" <${process.env.SMTP_USER}>`,
+        to: adminEmail,
+        subject: `[Moderation Required] ${productName} by ${sellerName}`,
+        html,
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error("❌ MailService Error (Admin Notification):", error);
+      return { error: error.message };
+    }
+  },
+
+  /**
    * Send contact form submission to admin
    */
   sendContactForm: async (senderName: string, senderEmail: string, subject: string, message: string) => {

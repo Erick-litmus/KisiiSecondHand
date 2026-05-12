@@ -93,7 +93,7 @@ const Navbar = () => {
     window.location.href = "/";
   };
 
-  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").filter(Boolean).length === 2;
 
   if (isChatPage) return null;
 

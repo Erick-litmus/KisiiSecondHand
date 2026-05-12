@@ -2,13 +2,25 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { MailService } from "@/lib/mail-service";
 
 export async function approveProduct(productId: string) {
   try {
-    await prisma.product.update({
+    const product = await prisma.product.update({
       where: { id: productId },
       data: { status: "APPROVED" },
+      include: { seller: { select: { email: true, name: true } } }
     });
+
+    // Send notification email
+    if (product.seller.email) {
+      await MailService.sendProductStatusEmail(
+        product.seller.email,
+        product.title,
+        "APPROVED"
+      );
+    }
+
     revalidatePath("/admin");
     revalidatePath("/admin/products");
     revalidatePath("/");
@@ -20,12 +32,24 @@ export async function approveProduct(productId: string) {
   }
 }
 
-export async function rejectProduct(productId: string) {
+export async function rejectProduct(productId: string, reason?: string) {
   try {
-    await prisma.product.update({
+    const product = await prisma.product.update({
       where: { id: productId },
       data: { status: "REJECTED" },
+      include: { seller: { select: { email: true, name: true } } }
     });
+
+    // Send notification email
+    if (product.seller.email) {
+      await MailService.sendProductStatusEmail(
+        product.seller.email,
+        product.title,
+        "REJECTED",
+        reason || "Does not meet our community guidelines."
+      );
+    }
+
     revalidatePath("/admin");
     revalidatePath("/admin/products");
     revalidatePath("/");

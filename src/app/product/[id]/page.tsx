@@ -105,6 +105,36 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                       <User className="w-8 h-8 text-emerald-600" />
                    </div>
                    <div>
+                      <div className="font-bold text-lg textitle}</h1>
+          
+          <div className="flex items-center gap-4 mb-8">
+             <div className="text-4xl font-black text-emerald-600">
+               KSh {product.price.toLocaleString()}
+             </div>
+             <div className="text-slate-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wider">
+               <Clock className="w-4 h-4" />
+               Posted Recently
+             </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-8">
+             <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+               <Info className="w-4 h-4 text-emerald-600" />
+               Description
+             </h3>
+             <p className="text-slate-600 leading-relaxed">
+               {product.description}
+             </p>
+          </div>
+
+          {/* Seller Card */}
+          <div className="bg-emerald-50/30 p-6 rounded-3xl border border-emerald-100 mb-8">
+             <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                   <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center border border-emerald-200 overflow-hidden">
+                      <User className="w-8 h-8 text-emerald-600" />
+                   </div>
+                   <div>
                       <div className="font-bold text-lg text-slate-900 flex items-center gap-1">
                         {product.seller.name || "Anonymous Seller"}
                         <ShieldCheck className="w-4 h-4 text-emerald-500" />

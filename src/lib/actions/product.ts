@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import { MailService } from "@/lib/mail-service";
 
 export async function createProduct(formData: {
   title: string;
@@ -65,6 +66,18 @@ export async function createProduct(formData: {
     // Do NOT revalidate / or /browse here — those should only update after
     // an admin approves or rejects (handled in lib/actions/admin.ts).
     revalidatePath("/admin");
+
+    // Notify admin of new submission
+    try {
+      await MailService.sendAdminNewProductNotification(
+        product.title,
+        session.user.name || session.user.email,
+        product.id
+      );
+    } catch (emailErr) {
+      console.error("Failed to send admin notification:", emailErr);
+      // Don't fail the whole action if email fails
+    }
 
     // Return only serializable data
     return { success: true, productId: product.id };

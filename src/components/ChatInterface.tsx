@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { sendMessage, markMessagesAsRead, updateLastActive, getMessages, editMessage, deleteMessage } from "@/lib/actions/chat";
 import { Send, User, ChevronLeft, ShieldCheck, MoreVertical, Edit2, Trash2, X, Check, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -16,6 +14,127 @@ interface ChatInterfaceProps {
   product: any;
   initialLastActive?: string | null;
 }
+
+// Memoized Message Bubble component to prevent unnecessary re-renders
+const MessageBubble = React.memo(({ 
+  msg, 
+  isMe, 
+  isEditing, 
+  isMenuOpen, 
+  currentUser, 
+  otherUserOnline,
+  onMenuToggle,
+  onEditClick,
+  onDeleteClick,
+  onEditCancel,
+  onEditSubmit,
+  editText,
+  setEditText
+}: any) => {
+  const timeString = useMemo(() => {
+    if (!msg.createdAt) return "";
+    const d = new Date(msg.createdAt);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, [msg.createdAt]);
+
+  return (
+    <div className={cn(
+      "flex w-full mb-1 group",
+      isMe ? "justify-end" : "justify-start"
+    )}>
+      <div className={cn(
+        "relative max-w-[85%] md:max-w-[70%] px-3 py-1.5 shadow-md",
+        isMe 
+          ? "bg-[#005c4b] text-white rounded-lg rounded-tr-none" 
+          : "bg-[#202c33] text-slate-200 rounded-lg rounded-tl-none"
+      )}>
+        {/* Bubble Tail */}
+        <div className={cn(
+          "absolute top-0 w-2 h-2.5",
+          isMe 
+            ? "right-[-8px] border-l-[8px] border-l-[#005c4b] border-b-[10px] border-b-transparent" 
+            : "left-[-8px] border-r-[8px] border-r-[#202c33] border-b-[10px] border-b-transparent"
+        )} />
+
+        {isMe && (
+          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button 
+              onClick={() => onMenuToggle(msg.id)}
+              className="p-1 hover:bg-black/20 rounded-full text-white/50 hover:text-white"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-[#233138] border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px] z-20">
+                <button 
+                  onClick={() => onEditClick(msg)}
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-slate-200"
+                >
+                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                </button>
+                <button 
+                  onClick={() => onDeleteClick(msg.id)}
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-red-400"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col min-w-[60px]">
+          {isEditing ? (
+            <div className="flex flex-col gap-2 min-w-[200px]">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                className="bg-black/20 border border-white/10 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 min-h-[60px]"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={onEditCancel} className="p-1 hover:bg-white/10 rounded text-white/50">
+                  <X className="w-4 h-4" />
+                </button>
+                <button onClick={() => onEditSubmit(msg.id)} className="p-1 hover:bg-emerald-500/20 rounded text-emerald-500">
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[14.5px] leading-relaxed mb-1 pr-1">{msg.text}</p>
+          )}
+          <div className="flex items-center justify-end gap-1 opacity-60 mt-0.5 self-end">
+            <span className="text-[10px] font-bold">
+              {timeString}
+            </span>
+            {isMe && (
+              <div className="flex -space-x-1">
+                {/* First Tick (Sent) */}
+                <span className={cn(
+                  "text-[10px]",
+                  msg.isRead ? "text-[#53bdeb]" : "text-white/50"
+                )}>✓</span>
+                
+                {/* Second Tick (Delivered/Read) */}
+                {(otherUserOnline || msg.isRead) && (
+                  <span className={cn(
+                    "text-[10px]",
+                    msg.isRead ? "text-[#53bdeb]" : "text-white/50"
+                  )}>✓</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+MessageBubble.displayName = "MessageBubble";
 
 export default function ChatInterface({ 
   conversationId, 
@@ -66,7 +185,7 @@ export default function ChatInterface({
             if (newMessages.length === 0) return currentMessages;
             const updated = [...currentMessages, ...newMessages];
             // Always sort to keep conversation order consistent
-            return updated.sort((a, b) => 
+            return [...updated].sort((a, b) => 
               new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
             );
           });
@@ -97,7 +216,7 @@ export default function ChatInterface({
       clearInterval(statusInterval);
       clearInterval(tickInterval);
     };
-  }, []);
+  }, [conversationId]);
 
   const [, setTick] = useState(0);
 
@@ -132,20 +251,30 @@ export default function ChatInterface({
         setUnreadSinceLastScroll(prev => prev + 1);
       }
     }
-  }, [messages, isFirstScroll]);
+  }, [messages, isFirstScroll, currentUser.id]);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (scrollRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      // Update ref immediately
       isAtBottomRef.current = isAtBottom;
-      setShowScrollButton(!isAtBottom);
+      
+      // Update state only if changed to prevent unnecessary re-renders
+      setShowScrollButton(prev => {
+        if (prev !== !isAtBottom) return !isAtBottom;
+        return prev;
+      });
       
       if (isAtBottom) {
-        setUnreadSinceLastScroll(0);
+        setUnreadSinceLastScroll(prev => {
+           if (prev !== 0) return 0;
+           return prev;
+        });
       }
     }
-  };
+  }, []);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -157,11 +286,11 @@ export default function ChatInterface({
     }
   };
 
-  // Group messages by date
-  const groupMessagesByDate = (msgs: any[]) => {
+  // Memoize grouped messages to prevent expensive re-calculation on every scroll/render
+  const groupedMessages = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
     
-    msgs.forEach(msg => {
+    messages.forEach(msg => {
       if (!msg) return;
       const date = new Date(msg.createdAt || Date.now());
       const dateStr = date.toLocaleDateString([], { 
@@ -176,7 +305,7 @@ export default function ChatInterface({
       groups[dateStr].push(msg);
     });
     
-    return Object.entries(groups).map(([date, messages]) => {
+    return Object.entries(groups).map(([date, msgs]) => {
       const today = new Date().toLocaleDateString([], { 
         year: 'numeric', 
         month: 'long', 
@@ -192,11 +321,9 @@ export default function ChatInterface({
       if (date === today) displayDate = "Today";
       else if (date === yesterday) displayDate = "Yesterday";
       
-      return { date: displayDate, messages };
+      return { date: displayDate, messages: msgs };
     });
-  };
-
-  const groupedMessages = groupMessagesByDate(messages);
+  }, [messages]);
 
   // Initial online check
   useEffect(() => {
@@ -316,7 +443,7 @@ export default function ChatInterface({
     return () => {
       supabaseBrowserClient.removeChannel(channel);
     };
-  }, [conversationId, currentUser?.id, currentUser?.name, otherUser?.id, otherUser?.name]);
+  }, [conversationId, currentUser?.id, otherUser?.id]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -388,7 +515,35 @@ export default function ChatInterface({
     setIsSending(false);
   };
 
-  const handleEdit = async (messageId: string) => {
+  const onMenuToggle = useCallback((msgId: string) => {
+    setActiveMenuId(prev => prev === msgId ? null : msgId);
+  }, []);
+
+  const onEditClick = useCallback((msg: any) => {
+    setEditingMessageId(msg.id);
+    setEditText(msg.text);
+    setActiveMenuId(null);
+  }, []);
+
+  const onDeleteClick = useCallback(async (messageId: string) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    const result = await deleteMessage(messageId);
+    if (result.success) {
+      setMessages((prev: any) => prev.filter((m: any) => m.id !== messageId));
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'MESSAGE_DELETED',
+          payload: { id: messageId }
+        });
+      }
+    } else {
+      alert("Failed to delete message");
+    }
+    setActiveMenuId(null);
+  }, []);
+
+  const handleEditSubmit = async (messageId: string) => {
     if (!editText.trim()) return;
     const result = await editMessage(messageId, editText);
     if (result.success) {
@@ -404,23 +559,6 @@ export default function ChatInterface({
       setEditText("");
     } else {
       alert("Failed to edit message");
-    }
-  };
-
-  const handleDelete = async (messageId: string) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
-    const result = await deleteMessage(messageId);
-    if (result.success) {
-      setMessages((prev: any) => prev.filter((m: any) => m.id !== messageId));
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'MESSAGE_DELETED',
-          payload: { id: messageId }
-        });
-      }
-    } else {
-      alert("Failed to delete message");
     }
   };
 
@@ -473,114 +611,24 @@ export default function ChatInterface({
               </span>
             </div>
 
-            {group.messages.map((msg, i) => {
-              if (!msg) return null;
-              const isMe = msg.senderId === currentUser?.id;
-              const isEditing = editingMessageId === msg.id;
-              const isMenuOpen = activeMenuId === msg.id;
-              
-              return (
-                <div key={msg.id || `${groupIdx}-${i}`} className={cn(
-                  "flex w-full mb-1 group",
-                  isMe ? "justify-end" : "justify-start"
-                )}>
-                  <div className={cn(
-                    "relative max-w-[85%] md:max-w-[70%] px-3 py-1.5 shadow-md",
-                    isMe 
-                      ? "bg-[#005c4b] text-white rounded-lg rounded-tr-none" 
-                      : "bg-[#202c33] text-slate-200 rounded-lg rounded-tl-none"
-                  )}>
-                    {/* Bubble Tail */}
-                    <div className={cn(
-                      "absolute top-0 w-2 h-2.5",
-                      isMe 
-                        ? "right-[-8px] border-l-[8px] border-l-[#005c4b] border-b-[10px] border-b-transparent" 
-                        : "left-[-8px] border-r-[8px] border-r-[#202c33] border-b-[10px] border-b-transparent"
-                    )} />
-
-                    {isMe && (
-                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <button 
-                          onClick={() => setActiveMenuId(isMenuOpen ? null : (msg.id as string))}
-                          className="p-1 hover:bg-black/20 rounded-full text-white/50 hover:text-white"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                        
-                        {isMenuOpen && (
-                          <div className="absolute right-0 top-full mt-1 bg-[#233138] border border-white/10 rounded-lg shadow-xl py-1 min-w-[100px] z-20">
-                            <button 
-                              onClick={() => {
-                                setEditingMessageId(msg.id as string);
-                                setEditText(msg.text);
-                                setActiveMenuId(null);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-slate-200"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </button>
-                            <button 
-                              onClick={() => {
-                                handleDelete(msg.id as string);
-                                setActiveMenuId(null);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/5 flex items-center gap-2 text-red-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex flex-col min-w-[60px]">
-                      {isEditing ? (
-                        <div className="flex flex-col gap-2 min-w-[200px]">
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            className="bg-black/20 border border-white/10 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 min-h-[60px]"
-                            autoFocus
-                          />
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => setEditingMessageId(null)} className="p-1 hover:bg-white/10 rounded text-white/50">
-                              <X className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleEdit(msg.id as string)} className="p-1 hover:bg-emerald-500/20 rounded text-emerald-500">
-                              <Check className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-[14.5px] leading-relaxed mb-1 pr-1">{msg.text}</p>
-                      )}
-                      <div className="flex items-center justify-end gap-1 opacity-60 mt-0.5 self-end">
-                        <span className="text-[10px] font-bold">
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                        </span>
-                        {isMe && (
-                          <div className="flex -space-x-1">
-                            {/* First Tick (Sent) */}
-                            <span className={cn(
-                              "text-[10px]",
-                              msg.isRead ? "text-[#53bdeb]" : "text-white/50"
-                            )}>✓</span>
-                            
-                            {/* Second Tick (Delivered/Read) */}
-                            {(otherUserOnline || msg.isRead) && (
-                              <span className={cn(
-                                "text-[10px]",
-                                msg.isRead ? "text-[#53bdeb]" : "text-white/50"
-                              )}>✓</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {group.messages.map((msg, i) => (
+              <MessageBubble 
+                key={msg.id || `${groupIdx}-${i}`}
+                msg={msg}
+                isMe={msg.senderId === currentUser?.id}
+                isEditing={editingMessageId === msg.id}
+                isMenuOpen={activeMenuId === msg.id}
+                currentUser={currentUser}
+                otherUserOnline={otherUserOnline}
+                onMenuToggle={onMenuToggle}
+                onEditClick={onEditClick}
+                onDeleteClick={onDeleteClick}
+                onEditCancel={() => setEditingMessageId(null)}
+                onEditSubmit={handleEditSubmit}
+                editText={editText}
+                setEditText={setEditText}
+              />
+            ))}
           </div>
         ))}
 

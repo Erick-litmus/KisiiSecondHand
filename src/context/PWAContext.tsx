@@ -27,10 +27,14 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Check if already installed
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
-    if (isStandalone) {
-      setIsInstalled(true);
-    }
+    const checkIfInstalled = () => {
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+      if (isStandalone) {
+        setIsInstalled(true);
+      }
+    };
+
+    checkIfInstalled();
 
     const handler = (e: any) => {
       e.preventDefault();

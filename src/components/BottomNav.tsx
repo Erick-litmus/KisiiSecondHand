@@ -27,7 +27,7 @@ const BottomNav = () => {
     { label: "Account", icon: User, path: session ? "/dashboard" : "/login" },
   ];
 
-  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").length === 3;
+  const isChatPage = pathname?.startsWith("/messages/") && pathname.split("/").filter(Boolean).length === 2;
 
   if (!mounted || isChatPage) return null;
 
