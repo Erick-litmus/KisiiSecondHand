@@ -7,8 +7,25 @@ import SearchBar from "@/components/SearchBar";
 
 import { getSession } from "@/lib/auth";
 
+// Define proper types for product data
+interface ProductWithRelations {
+  id: string;
+  title: string;
+  price: number;
+  image: string | null;
+  category: {
+    name: string;
+  };
+  seller: {
+    name: string;
+  };
+  savedBy?: Array<{
+    userId: string;
+  }>;
+}
+
 async function BrowseContent({ searchParams }: { searchParams: Promise<{ q?: string; category?: string }> }) {
-  let products: any[] = [];
+  let products: ProductWithRelations[] = [];
   let error: string | null = null;
 
   try {
@@ -43,7 +60,7 @@ async function BrowseContent({ searchParams }: { searchParams: Promise<{ q?: str
       },
       orderBy: { createdAt: "desc" },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Browse page error:", e);
     error = "Failed to load products. Please try again.";
   }
@@ -93,7 +110,7 @@ async function BrowseContent({ searchParams }: { searchParams: Promise<{ q?: str
           <div className="px-6 flex flex-col gap-4">
             {products.length > 0 ? (
               products.map((product) => {
-                const isSavedInitial = userId ? (product as any).savedBy?.length > 0 : false;
+                const isSavedInitial = userId ? product.savedBy?.length > 0 : false;
                 return (
                   <HorizontalProductCard
                     key={product.id}

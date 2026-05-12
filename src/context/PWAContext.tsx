@@ -21,14 +21,15 @@ const PWAContext = createContext<PWAContextType>({
 export const usePWA = () => useContext(PWAContext);
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
     // Check if already installed
     const checkIfInstalled = () => {
-      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || 
+        ((window.navigator as unknown as { standalone?: boolean }).standalone === true);
       if (isStandalone) {
         setIsInstalled(true);
       }
@@ -36,7 +37,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkIfInstalled();
 
-    const handler = (e: any) => {
+    const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
       console.log("PWA Install Prompt Ready");
