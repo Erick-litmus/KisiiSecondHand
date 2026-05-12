@@ -11,7 +11,7 @@ function VerifyContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -38,8 +38,9 @@ function VerifyContent() {
     const result = await verifyOTP({ email, code });
 
     if (result.success) {
+      // Don't call router.refresh() as it reloads the entire page and causes products to disappear
+      // Just navigate to the home page - the session will be set server-side
       router.push("/");
-      router.refresh();
     } else {
       setError(result.error || "Failed to verify code");
       setIsSubmitting(false);
@@ -109,7 +110,7 @@ function VerifyContent() {
                 </>
               )}
             </button>
-            
+
             <p className="mt-6 text-center text-xs text-slate-500 font-medium">
               Didn't receive a code?{" "}
               <Link href="/login" className="font-bold text-emerald-500 hover:text-emerald-400 transition-colors">

@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
 
       if (response.ok) {
         router.push("/admin");
-        router.refresh();
+        // Don't call router.refresh() - let the navigation handle it naturally
       } else {
         setError("Invalid password. Please try again.");
       }
@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
             disabled={isSubmitting}
             className="w-full bg-emerald-500 text-[#0a0a0a] py-5 rounded-2xl font-black text-lg hover:bg-emerald-400 transition-all shadow-2xl shadow-emerald-500/20 flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {isSubmitting ? "CHECKING..." : "ENTER DASHBOARD"} 
+            {isSubmitting ? "CHECKING..." : "ENTER DASHBOARD"}
             {!isSubmitting && <ArrowRight className="w-6 h-6" />}
           </button>
         </form>

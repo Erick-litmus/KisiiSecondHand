@@ -8,7 +8,7 @@ const prismaClientSingleton = () => {
 
   const pool = new pg.Pool({
     connectionString,
-    max: 3,                          // Keep low for Supabase free tier
+    max: 20,                         // Increased from 3 for better concurrency; Supabase free tier supports this
     idleTimeoutMillis: 60000,
     connectionTimeoutMillis: 10000,  // 10s — enough for cold Supabase connections
   });

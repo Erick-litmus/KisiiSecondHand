@@ -43,7 +43,7 @@ function LoginContent() {
       setIsSuccess(true);
       setTimeout(() => {
         router.push(callback);
-        router.refresh();
+        // Don't call router.refresh() - it reloads the page and causes products to disappear
       }, 1500);
     } else if (result.requiresVerification) {
       router.push(`/verify?email=${encodeURIComponent(result.email)}`);
@@ -160,7 +160,7 @@ function LoginContent() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Sign In 
+                  Sign In
                 </>
               )}
             </button>

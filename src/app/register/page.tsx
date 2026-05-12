@@ -80,7 +80,7 @@ export default function RegisterPage() {
       // Wait 2 seconds to show success message before redirecting
       setTimeout(() => {
         router.push(`/verify?email=${encodeURIComponent(result.email)}`);
-        router.refresh();
+        // Don't call router.refresh() - it reloads the page and causes products to disappear
       }, 2000);
     } else {
       setError(result.error || "Failed to register");
@@ -131,23 +131,23 @@ export default function RegisterPage() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Avatar Upload */}
             <div className="flex justify-center mb-6">
-              <div 
+              <div
                 className="relative group w-24 h-24 rounded-full bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center cursor-pointer hover:bg-[#222] transition-all overflow-hidden shadow-inner"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                  accept="image/*,.heic,.heif" 
-                  className="hidden" 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*,.heic,.heif"
+                  className="hidden"
                 />
                 {imagePreview ? (
                   <>
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button 
-                      type="button" 
-                      onClick={removeImage} 
+                    <button
+                      type="button"
+                      onClick={removeImage}
                       className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-8 h-8 text-white" />
@@ -249,7 +249,7 @@ export default function RegisterPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Create Account 
+                  Create Account
                 </>
               )}
             </button>
